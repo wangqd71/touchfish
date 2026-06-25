@@ -369,15 +369,12 @@ class InventoryDialog(QDialog):
         self._refresh()
 
     def _refresh(self):
-        """刷新整个界面"""
-        layout = self.layout()
-        while layout.count():
-            child = layout.takeAt(0)
-            w = child.widget()
-            if w:
-                w.setParent(None)
-                w.deleteLater()
-        self._build_ui()
+        """刷新整个界面 - 关闭并重新打开"""
+        parent = self.parent()
+        self.close()
+        if parent and self.hero:
+            dlg = InventoryDialog(self.hero, parent)
+            dlg.exec_()
 
 
 class MainWindow(QMainWindow):
