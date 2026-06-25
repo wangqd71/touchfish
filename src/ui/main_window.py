@@ -474,9 +474,9 @@ class MainWindow(QMainWindow):
         self.lbl_atk.setText(f"⚔️ 攻击: {hero.atk}")
         self.lbl_def.setText(f"🛡️ 防御: {hero.defense}")
         self.lbl_spd.setText(f"💨 速度: {hero.speed:.1f}")
-        self.lbl_gold.setText("Gold: {}".format(hero.gold))
-        self.lbl_sp.setText("SP: {}".format(hero.skill_points))
-        self.lbl_crit.setText("Crit: {}%".format(int(hero.crit_rate*100)))
+        self.lbl_gold.setText("金币: {}".format(hero.gold))
+        self.lbl_sp.setText("技能点: {}".format(hero.skill_points))
+        self.lbl_crit.setText("暴击: {}%".format(int(hero.crit_rate*100)))
 
         # Update equipment display
         for slot_key, lbl in [("weapon", self.lbl_weapon),
@@ -485,10 +485,10 @@ class MainWindow(QMainWindow):
             item = hero.equipment.get(slot_key)
             if item:
                 stat_parts = []
-                if item.hp > 0: stat_parts.append("HP+" + str(item.hp))
-                if item.atk > 0: stat_parts.append("ATK+" + str(item.atk))
-                if item.defense > 0: stat_parts.append("DEF+" + str(item.defense))
-                if item.speed > 0: stat_parts.append("SPD+" + str(item.speed))
+                if item.hp > 0: stat_parts.append("生命+" + str(item.hp))
+                if item.atk > 0: stat_parts.append("攻击+" + str(item.atk))
+                if item.defense > 0: stat_parts.append("防御+" + str(item.defense))
+                if item.speed > 0: stat_parts.append("速度+" + str(item.speed))
                 stat_str = " ".join(stat_parts)
                 slot_name = EQUIPMENT_SLOTS[slot_key]["name"]
                 rname = item.rarity_name
@@ -538,10 +538,10 @@ class MainWindow(QMainWindow):
             row.setSpacing(4)
 
             stat_parts = []
-            if item.hp > 0: stat_parts.append("HP+" + str(item.hp))
-            if item.atk > 0: stat_parts.append("ATK+" + str(item.atk))
-            if item.defense > 0: stat_parts.append("DEF+" + str(item.defense))
-            if item.speed > 0: stat_parts.append("SPD+" + str(item.speed))
+            if item.hp > 0: stat_parts.append("生命+" + str(item.hp))
+            if item.atk > 0: stat_parts.append("攻击+" + str(item.atk))
+            if item.defense > 0: stat_parts.append("防御+" + str(item.defense))
+            if item.speed > 0: stat_parts.append("速度+" + str(item.speed))
 
             slot_name = EQUIPMENT_SLOTS[item.slot]["name"]
             text = "[" + slot_name + "] " + item.name + " (" + item.rarity_name + ") " + " ".join(stat_parts)
@@ -549,7 +549,7 @@ class MainWindow(QMainWindow):
             lbl.setStyleSheet("font-size: 10px; color: " + item.rarity_color + ";")
             row.addWidget(lbl, 1)
 
-            btn = QPushButton("E")
+            btn = QPushButton("装")
             btn.setFixedSize(24, 20)
             btn.setStyleSheet("QPushButton { font-size: 10px; background-color: #1a1a2e; color: #55CC55; border: 1px solid #336633; } QPushButton:hover { background-color: #2a4a2a; }")
             btn.clicked.connect(lambda checked, i=idx: self._equip_from_inventory(i))

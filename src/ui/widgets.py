@@ -99,17 +99,241 @@ class BattleLogWidget(QLabel):
         self.setText("\n".join(self.log_lines))
 
 
+class MonsterCanvas(QWidget):
+    """像素风怪物画布"""
+
+    # 怪物像素图案 (8x8 grid, 0=transparent, 1-9=颜色编号)
+    PATTERNS = {
+        "暗影史莱姆": [
+            [0,0,0,1,1,0,0,0],
+            [0,0,1,2,2,1,0,0],
+            [0,1,2,3,3,2,1,0],
+            [1,2,3,4,4,3,2,1],
+            [1,2,3,4,4,3,2,1],
+            [0,1,2,3,3,2,1,0],
+            [0,0,1,2,2,1,0,0],
+            [0,0,0,1,1,0,0,0],
+        ],
+        "骷髅兵": [
+            [0,0,1,1,1,1,0,0],
+            [0,1,2,2,2,2,1,0],
+            [0,1,3,2,2,3,1,0],
+            [0,1,2,2,2,2,1,0],
+            [0,0,1,4,4,1,0,0],
+            [0,0,0,1,1,0,0,0],
+            [0,0,1,1,1,1,0,0],
+            [0,1,0,1,1,0,1,0],
+        ],
+        "蝙蝠": [
+            [1,0,0,0,0,0,0,1],
+            [1,1,0,0,0,0,1,1],
+            [1,2,1,0,0,1,2,1],
+            [1,2,2,1,1,2,2,1],
+            [0,1,2,3,3,2,1,0],
+            [0,0,1,2,2,1,0,0],
+            [0,0,0,1,1,0,0,0],
+            [0,0,0,0,0,0,0,0],
+        ],
+        "狼人": [
+            [0,1,0,0,0,0,1,0],
+            [1,2,1,0,0,1,2,1],
+            [1,2,2,1,1,2,2,1],
+            [0,1,3,2,2,3,1,0],
+            [0,1,2,4,4,2,1,0],
+            [0,0,1,2,2,1,0,0],
+            [0,0,1,2,2,1,0,0],
+            [0,1,1,0,0,1,1,0],
+        ],
+        "暗影骑士": [
+            [0,0,1,1,1,1,0,0],
+            [0,1,2,3,3,2,1,0],
+            [0,1,3,4,4,3,1,0],
+            [0,0,1,2,2,1,0,0],
+            [0,1,1,1,1,1,1,0],
+            [1,2,1,1,1,1,2,1],
+            [1,2,0,1,1,0,2,1],
+            [0,1,0,1,1,0,1,0],
+        ],
+        "岩石傀儡": [
+            [0,1,1,1,1,1,1,0],
+            [1,2,2,2,2,2,2,1],
+            [1,2,3,2,2,3,2,1],
+            [1,2,2,2,2,2,2,1],
+            [1,2,2,3,3,2,2,1],
+            [0,1,2,2,2,2,1,0],
+            [0,0,1,2,2,1,0,0],
+            [0,0,1,1,1,1,0,0],
+        ],
+        "毒蝎": [
+            [0,0,0,0,0,0,1,0],
+            [0,0,0,0,0,1,2,1],
+            [0,1,0,0,0,0,1,0],
+            [1,2,1,1,1,1,0,0],
+            [0,1,2,3,2,1,0,0],
+            [0,0,1,2,1,0,0,0],
+            [0,1,0,0,0,1,0,0],
+            [1,0,0,0,0,0,1,0],
+        ],
+        "洞穴巨蛛": [
+            [1,0,0,0,0,0,0,1],
+            [0,1,0,0,0,0,1,0],
+            [0,1,1,1,1,1,1,0],
+            [1,2,3,2,2,3,2,1],
+            [0,1,2,2,2,2,1,0],
+            [0,1,1,1,1,1,1,0],
+            [1,0,1,0,0,1,0,1],
+            [1,0,0,1,1,0,0,1],
+        ],
+        "矮人矿工": [
+            [0,0,1,1,1,1,0,0],
+            [0,1,2,2,2,2,1,0],
+            [0,1,3,2,2,3,1,0],
+            [0,1,2,4,4,2,1,0],
+            [0,0,1,2,2,1,0,0],
+            [0,1,2,2,2,2,1,0],
+            [0,1,0,2,2,0,1,0],
+            [0,1,0,1,1,0,1,0],
+        ],
+        "水晶魔像": [
+            [0,0,1,2,2,1,0,0],
+            [0,1,2,3,3,2,1,0],
+            [1,2,3,4,4,3,2,1],
+            [1,2,3,4,4,3,2,1],
+            [0,1,2,3,3,2,1,0],
+            [0,0,1,2,2,1,0,0],
+            [0,0,1,0,0,1,0,0],
+            [0,1,1,0,0,1,1,0],
+        ],
+        "恶魔侍卫": [
+            [1,0,0,0,0,0,0,1],
+            [1,1,0,0,0,0,1,1],
+            [0,1,2,2,2,2,1,0],
+            [0,1,3,2,2,3,1,0],
+            [0,1,2,4,4,2,1,0],
+            [0,0,1,2,2,1,0,0],
+            [0,1,1,1,1,1,1,0],
+            [1,2,0,1,1,0,2,1],
+        ],
+        "堕落天使": [
+            [1,1,0,0,0,0,1,1],
+            [1,2,1,0,0,1,2,1],
+            [0,1,2,1,1,2,1,0],
+            [0,1,2,3,3,2,1,0],
+            [0,0,1,2,2,1,0,0],
+            [0,1,1,2,2,1,1,0],
+            [1,2,0,1,1,0,2,1],
+            [1,0,0,0,0,0,0,1],
+        ],
+        "死灵法师": [
+            [0,0,1,1,1,1,0,0],
+            [0,1,2,3,3,2,1,0],
+            [0,1,3,4,4,3,1,0],
+            [0,1,2,2,2,2,1,0],
+            [0,0,1,4,4,1,0,0],
+            [0,1,1,1,1,1,1,0],
+            [1,0,0,1,1,0,0,1],
+            [1,0,0,1,1,0,0,1],
+        ],
+        "地狱犬": [
+            [1,1,0,0,0,0,1,1],
+            [1,2,1,0,0,1,2,1],
+            [0,1,2,2,2,2,1,0],
+            [0,1,3,4,4,3,1,0],
+            [0,0,1,2,2,1,0,0],
+            [0,0,1,2,2,1,0,0],
+            [0,0,1,0,0,1,0,0],
+            [0,1,1,0,0,1,1,0],
+        ],
+        "魔王": [
+            [1,0,0,1,1,0,0,1],
+            [1,1,0,1,1,0,1,1],
+            [0,1,2,3,3,2,1,0],
+            [0,1,3,4,4,3,1,0],
+            [0,1,2,5,5,2,1,0],
+            [0,0,1,2,2,1,0,0],
+            [0,1,1,1,1,1,1,0],
+            [1,2,1,0,0,1,2,1],
+        ],
+    }
+
+    # 颜色映射
+    COLORS = {
+        1: "#333333",  # 深灰轮廓
+        2: "#666666",  # 灰色主体
+        3: "#FF4444",  # 红色眼睛
+        4: "#FFAA00",  # 金色高光
+        5: "#AA0000",  # 暗红
+    }
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(64, 64)
+        self.monster_name = ""
+        self._get_fallback_pattern()
+
+    def _get_fallback_pattern(self):
+        """没有匹配图案时的默认图案"""
+        self.pattern = [
+            [0,0,1,1,1,1,0,0],
+            [0,1,2,2,2,2,1,0],
+            [0,1,2,3,3,2,1,0],
+            [0,1,2,2,2,2,1,0],
+            [0,0,1,2,2,1,0,0],
+            [0,0,1,1,1,1,0,0],
+            [0,0,0,1,1,0,0,0],
+            [0,0,0,0,0,0,0,0],
+        ]
+
+    def set_monster(self, name):
+        self.monster_name = name
+        self.pattern = self.PATTERNS.get(name, self.PATTERNS.get("暗影史莱姆"))
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing, False)
+
+        # 背景
+        painter.fillRect(self.rect(), QColor("#0d0d1a"))
+
+        # 绘制像素
+        pixel_size = 7
+        offset_x = (self.width() - 8 * pixel_size) // 2
+        offset_y = (self.height() - 8 * pixel_size) // 2
+
+        for y, row in enumerate(self.pattern):
+            for x, val in enumerate(row):
+                if val > 0:
+                    color = self.COLORS.get(val, "#555555")
+                    painter.fillRect(
+                        offset_x + x * pixel_size,
+                        offset_y + y * pixel_size,
+                        pixel_size - 1,
+                        pixel_size - 1,
+                        QColor(color)
+                    )
+        painter.end()
+
+
 class MonsterWidget(QWidget):
     """怪物显示控件"""
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedHeight(80)
+        self.setFixedHeight(90)
 
-        layout = QVBoxLayout(self)
+        layout = QHBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(8)
 
-        # 怪物名称和emoji
+        # 像素怪物
+        self.canvas = MonsterCanvas()
+        layout.addWidget(self.canvas)
+
+        # 右侧信息
+        right = QVBoxLayout()
+        right.setSpacing(2)
+
         self.name_label = QLabel("等待怪物...")
         self.name_label.setStyleSheet("""
             QLabel {
@@ -118,18 +342,20 @@ class MonsterWidget(QWidget):
                 font-weight: bold;
             }
         """)
-        self.name_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.name_label)
+        right.addWidget(self.name_label)
 
-        # 怪物血条
         self.hp_bar = DarkProgressBar("#FF4444")
-        layout.addWidget(self.hp_bar)
+        right.addWidget(self.hp_bar)
+
+        layout.addLayout(right, 1)
 
     def update_monster(self, monster):
         """更新怪物显示"""
         if monster:
-            self.name_label.setText(f"{monster.name} Lv.{monster.level}")
+            self.name_label.setText(monster.name + " Lv." + str(monster.level))
             self.hp_bar.setValue(int(monster.hp_percent * 100))
+            self.canvas.set_monster(monster.name)
         else:
             self.name_label.setText("等待怪物...")
             self.hp_bar.setValue(0)
+            self.canvas.set_monster("")
