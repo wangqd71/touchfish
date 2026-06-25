@@ -17,7 +17,7 @@ class LootTable:
     """掉落表"""
 
     @staticmethod
-    def roll(stage, is_boss=False, chapter=CHAPTER_1):
+    def roll(stage, is_boss=False, chapter=CHAPTER_1, drop_rate_bonus=0.0):
         """根据关卡和是否Boss计算掉落"""
         result = LootResult()
         result.is_boss = is_boss
@@ -33,9 +33,9 @@ class LootTable:
             result.exp = 20 + stage * 5
 
         # 装备掉落
-        drop_chance = DROP_CHANCE
+        drop_chance = DROP_CHANCE + drop_rate_bonus
         if is_boss:
-            drop_chance = 0.8  # Boss 80%掉装备
+            drop_chance = 0.8 + drop_rate_bonus  # Boss 80%掉装备
 
         if random.random() < drop_chance:
             # 随机装备部位

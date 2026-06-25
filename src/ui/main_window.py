@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QFrame, QApplication, QScrollArea, QDialog,
     QLineEdit, QComboBox, QGroupBox, QGridLayout, QTabWidget,
-    QSizePolicy
+    QSizePolicy, QCheckBox
 )
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QFont, QColor, QPalette, QIcon
@@ -232,6 +232,19 @@ class SkillTreeDialog(QDialog):
 
         layout.addWidget(tabs)
 
+        # 重置技能按钮
+        reset_cost = self.hero.get_reset_cost()
+        btn_reset = QPushButton("重置技能 ({} 金币)".format(reset_cost))
+        if reset_cost > 0 and self.hero.gold >= reset_cost:
+            btn_reset.setStyleSheet("""
+                QPushButton { background-color: #4a3a1a; color: #FFAA00; border-color: #665533; font-size: 12px; }
+                QPushButton:hover { background-color: #6a4a2a; }
+            """)
+            btn_reset.clicked.connect(self._reset_skills)
+        else:
+            btn_reset.setEnabled(False)
+        layout.addWidget(btn_reset)
+
         # 关闭按钮
         btn_close = QPushButton("Close")
         btn_close.clicked.connect(self.close)
@@ -239,42 +252,314 @@ class SkillTreeDialog(QDialog):
 
     def _learn(self, skill_id):
         if self.hero.learn_skill(skill_id):
-            # 删除所有顶级widget（tabs和close按钮会自动清理子内容）
-            layout = self.layout()
-            while layout.count():
-                child = layout.takeAt(0)
-                w = child.widget()
-                if w:
-                    w.setParent(None)
-                    w.deleteLater()
-            self._build_ui()
+            # 记住当前tab索引
+            old_tabs = self.findChild(QTabWidget)
+            tab_index = old_tabs.currentIndex() if old_tabs else 0
+            self._clear_layout(self.layout())
+            self._rebuild_ui(tab_index)
+
+    def _reset_skills(self):
+        if self.hero.reset_skills():
+            self._clear_layout(self.layout())
+            self._rebuild_ui()
+
+    def _rebuild_ui(self, tab_index=0):
+        """在现有布局上重建UI内容"""
+        layout = self.layout()
+
+        sp_label = QLabel("Available Points: " + str(self.hero.skill_points))
+        sp_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #FFAA00;")
+        sp_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(sp_label)
+
+        tree_info = self.hero.get_skill_tree_info()
+        if not tree_info:
+            layout.addWidget(QLabel("No skill tree"))
+            return
+
+        tabs = QTabWidget()
+        for bname, binfo in tree_info["branches"].items():
+            tab = QWidget()
+            tab_layout = QVBoxLayout(tab)
+
+            desc_label = QLabel(binfo["desc"])
+            desc_label.setStyleSheet("color: #888; font-size: 11px;")
+            tab_layout.addWidget(desc_label)
+
+            for skill in binfo["skills"]:
+                frame = QFrame()
+                frame.setStyleSheet("""
+                    QFrame {
+                        background-color: #1a1a2e;
+                        border: 1px solid #333;
+                        border-radius: 4px;
+                        padding: 6px;
+                    }
+                """)
+                s_layout = QHBoxLayout(frame)
+                s_layout.setSpacing(8)
+
+                info_layout = QVBoxLayout()
+                name_text = skill["name"] + "  [" + str(skill["current_rank"]) + "/" + str(skill["max_rank"]) + "]"
+                name_label = QLabel(name_text)
+                name_label.setStyleSheet("font-size: 13px; font-weight: bold; color: #FFAA00;")
+                name_label.setWordWrap(True)
+                info_layout.addWidget(name_label)
+
+                desc_text = skill["desc"] + "  (Lv." + str(skill["req_level"]) + ")"
+                desc_label = QLabel(desc_text)
+                desc_label.setStyleSheet("font-size: 11px; color: #888;")
+                desc_label.setWordWrap(True)
+                info_layout.addWidget(desc_label)
+
+                s_layout.addLayout(info_layout, 1)
+
+                btn = QPushButton("Learn")
+                btn.setFixedSize(60, 32)
+                if skill["can_learn"]:
+                    btn.setStyleSheet("""
+                        QPushButton { background-color: #2a4a2a; color: #55CC55; border-color: #336633; font-size: 12px; }
+                        QPushButton:hover { background-color: #3a6a3a; }
+                    """)
+                    btn.clicked.connect(lambda checked, sid=skill["id"]: self._learn(sid))
+                else:
+                    btn.setEnabled(False)
+                s_layout.addWidget(btn, 0)
+
+                tab_layout.addWidget(frame)
+
+            tab_layout.addStretch()
+            tabs.addTab(tab, bname)
+
+        if tab_index < tabs.count():
+            tabs.setCurrentIndex(tab_index)
+
+        layout.addWidget(tabs)
+
+        # 重置技能按钮
+        reset_cost = self.hero.get_reset_cost()
+        btn_reset = QPushButton("重置技能 ({} 金币)".format(reset_cost))
+        if reset_cost > 0 and self.hero.gold >= reset_cost:
+            btn_reset.setStyleSheet("""
+                QPushButton { background-color: #4a3a1a; color: #FFAA00; border-color: #665533; font-size: 12px; }
+                QPushButton:hover { background-color: #6a4a2a; }
+            """)
+            btn_reset.clicked.connect(self._reset_skills)
+        else:
+            btn_reset.setEnabled(False)
+        layout.addWidget(btn_reset)
+
+        btn_close = QPushButton("Close")
+        btn_close.clicked.connect(self.close)
+        layout.addWidget(btn_close)
 
     def _clear_layout(self, layout):
-        """清空layout中的widget"""
+        """清空layout中的所有widget和子布局"""
         while layout.count():
             child = layout.takeAt(0)
             w = child.widget()
             if w:
                 w.setParent(None)
                 w.deleteLater()
+            sub = child.layout()
+            if sub:
+                self._clear_layout(sub)
 
 
-class InventoryDialog(QDialog):
-    """背包栏对话框 - 展示所有装备+出售功能"""
+class TalentTreeDialog(QDialog):
+    """天赋树对话框 - 使用金币点亮"""
     def __init__(self, hero, parent=None):
         super().__init__(parent)
         self.hero = hero
-        self.setWindowTitle("Inventory")
-        self.setFixedSize(520, 600)
+        self.setWindowTitle("天赋树 - " + hero.name)
+        self.setFixedSize(560, 600)
         self.setStyleSheet(DARK_STYLE)
+        self._build_ui()
+
+    def _build_ui(self):
+        layout = QVBoxLayout(self)
+
+        gold_label = QLabel("💰 金币: {}".format(self.hero.gold))
+        gold_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #FFD700;")
+        gold_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(gold_label)
+
+        talent_info = self.hero.get_talent_info()
+
+        tabs = QTabWidget()
+        for bid, binfo in talent_info.items():
+            tab = QWidget()
+            tab_layout = QVBoxLayout(tab)
+
+            desc_label = QLabel(binfo["icon"] + " " + binfo["desc"])
+            desc_label.setStyleSheet("color: {}; font-size: 12px; font-weight: bold;".format(binfo["color"]))
+            tab_layout.addWidget(desc_label)
+
+            for talent in binfo["talents"]:
+                frame = QFrame()
+                frame.setStyleSheet("""
+                    QFrame {
+                        background-color: #1a1a2e;
+                        border: 1px solid #333;
+                        border-radius: 4px;
+                        padding: 6px;
+                    }
+                """)
+                t_layout = QHBoxLayout(frame)
+                t_layout.setSpacing(8)
+
+                info_layout = QVBoxLayout()
+                name_text = talent["icon"] + " " + talent["name"] + "  [" + str(talent["current_rank"]) + "/" + str(talent["max_rank"]) + "]"
+                name_label = QLabel(name_text)
+                name_label.setStyleSheet("font-size: 13px; font-weight: bold; color: {};".format(binfo["color"]))
+                name_label.setWordWrap(True)
+                info_layout.addWidget(name_label)
+
+                value_now = talent["effect_per_rank"] * talent["current_rank"] * 100
+                value_next = talent["effect_per_rank"] * (talent["current_rank"] + 1) * 100 if talent["current_rank"] < talent["max_rank"] else value_now
+                desc_text = talent["desc"].format(value=int(value_now)) + " → " + str(int(value_next)) + "%"
+                desc_label = QLabel(desc_text)
+                desc_label.setStyleSheet("font-size: 11px; color: #888;")
+                desc_label.setWordWrap(True)
+                info_layout.addWidget(desc_label)
+
+                t_layout.addLayout(info_layout, 1)
+
+                btn_text = str(talent["cost"]) + "金" if talent["cost"] > 0 else "MAX"
+                btn = QPushButton(btn_text)
+                btn.setFixedSize(70, 32)
+                if talent["can_learn"]:
+                    btn.setStyleSheet("""
+                        QPushButton { background-color: #3a3a1a; color: #FFD700; border-color: #665533; font-size: 11px; }
+                        QPushButton:hover { background-color: #5a4a2a; }
+                    """)
+                    btn.clicked.connect(lambda checked, tid=talent["id"]: self._learn(tid))
+                else:
+                    btn.setEnabled(False)
+                t_layout.addWidget(btn, 0)
+
+                tab_layout.addWidget(frame)
+
+            tab_layout.addStretch()
+            tabs.addTab(tab, binfo["icon"] + " " + binfo["name"])
+
+        layout.addWidget(tabs)
+
+        btn_close = QPushButton("关闭")
+        btn_close.clicked.connect(self.close)
+        layout.addWidget(btn_close)
+
+    def _learn(self, talent_id):
+        if self.hero.learn_talent(talent_id):
+            old_tabs = self.findChild(QTabWidget)
+            tab_index = old_tabs.currentIndex() if old_tabs else 0
+            self._clear_layout(self.layout())
+            self._rebuild_ui(tab_index)
+
+    def _rebuild_ui(self, tab_index=0):
+        layout = self.layout()
+
+        gold_label = QLabel("💰 金币: {}".format(self.hero.gold))
+        gold_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #FFD700;")
+        gold_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(gold_label)
+
+        talent_info = self.hero.get_talent_info()
+
+        tabs = QTabWidget()
+        for bid, binfo in talent_info.items():
+            tab = QWidget()
+            tab_layout = QVBoxLayout(tab)
+
+            desc_label = QLabel(binfo["icon"] + " " + binfo["desc"])
+            desc_label.setStyleSheet("color: {}; font-size: 12px; font-weight: bold;".format(binfo["color"]))
+            tab_layout.addWidget(desc_label)
+
+            for talent in binfo["talents"]:
+                frame = QFrame()
+                frame.setStyleSheet("""
+                    QFrame {
+                        background-color: #1a1a2e;
+                        border: 1px solid #333;
+                        border-radius: 4px;
+                        padding: 6px;
+                    }
+                """)
+                t_layout = QHBoxLayout(frame)
+                t_layout.setSpacing(8)
+
+                info_layout = QVBoxLayout()
+                name_text = talent["icon"] + " " + talent["name"] + "  [" + str(talent["current_rank"]) + "/" + str(talent["max_rank"]) + "]"
+                name_label = QLabel(name_text)
+                name_label.setStyleSheet("font-size: 13px; font-weight: bold; color: {};".format(binfo["color"]))
+                name_label.setWordWrap(True)
+                info_layout.addWidget(name_label)
+
+                value_now = talent["effect_per_rank"] * talent["current_rank"] * 100
+                value_next = talent["effect_per_rank"] * (talent["current_rank"] + 1) * 100 if talent["current_rank"] < talent["max_rank"] else value_now
+                desc_text = talent["desc"].format(value=int(value_now)) + " → " + str(int(value_next)) + "%"
+                desc_label = QLabel(desc_text)
+                desc_label.setStyleSheet("font-size: 11px; color: #888;")
+                desc_label.setWordWrap(True)
+                info_layout.addWidget(desc_label)
+
+                t_layout.addLayout(info_layout, 1)
+
+                btn_text = str(talent["cost"]) + "金" if talent["cost"] > 0 else "MAX"
+                btn = QPushButton(btn_text)
+                btn.setFixedSize(70, 32)
+                if talent["can_learn"]:
+                    btn.setStyleSheet("""
+                        QPushButton { background-color: #3a3a1a; color: #FFD700; border-color: #665533; font-size: 11px; }
+                        QPushButton:hover { background-color: #5a4a2a; }
+                    """)
+                    btn.clicked.connect(lambda checked, tid=talent["id"]: self._learn(tid))
+                else:
+                    btn.setEnabled(False)
+                t_layout.addWidget(btn, 0)
+
+                tab_layout.addWidget(frame)
+
+            tab_layout.addStretch()
+            tabs.addTab(tab, binfo["icon"] + " " + binfo["name"])
+
+        if tab_index < tabs.count():
+            tabs.setCurrentIndex(tab_index)
+
+        layout.addWidget(tabs)
+
+        btn_close = QPushButton("关闭")
+        btn_close.clicked.connect(self.close)
+        layout.addWidget(btn_close)
+
+    def _clear_layout(self, layout):
+        while layout.count():
+            child = layout.takeAt(0)
+            w = child.widget()
+            if w:
+                w.setParent(None)
+                w.deleteLater()
+            sub = child.layout()
+            if sub:
+                self._clear_layout(sub)
+
+
+class InventoryDialog(QDialog):
+    """背包对话框 - 装备评分 + 批量售卖 + 合成"""
+    def __init__(self, hero, parent=None):
+        super().__init__(parent)
+        self.hero = hero
+        self.setWindowTitle("背包")
+        self.setFixedSize(560, 640)
+        self.setStyleSheet(DARK_STYLE)
+        self.selected = set()
         self._build_ui()
 
     def _build_ui(self):
         layout = QVBoxLayout(self)
         layout.setSpacing(4)
 
-        # 已装备区
-        equip_label = QLabel("Equipped")
+        equip_label = QLabel("已装备")
         equip_label.setStyleSheet("font-size: 13px; font-weight: bold; color: #FFAA00; padding: 2px;")
         layout.addWidget(equip_label)
 
@@ -282,31 +567,24 @@ class InventoryDialog(QDialog):
             item = self.hero.equipment.get(slot_key)
             slot_name = EQUIPMENT_SLOTS[slot_key]["name"]
             if item:
-                stat_parts = []
-                if item.hp > 0: stat_parts.append("生命+" + str(item.hp))
-                if item.atk > 0: stat_parts.append("攻击+" + str(item.atk))
-                if item.defense > 0: stat_parts.append("防御+" + str(item.defense))
-                if item.speed > 0: stat_parts.append("速度+" + str(item.speed))
-                text = "[" + slot_name + "] " + item.name + " (" + item.rarity_name + ") " + " ".join(stat_parts)
+                text = "[{}] {} ({}) {} 评分:{}".format(
+                    slot_name, item.name, item.rarity_name, item.get_stat_text(), item.score)
                 color = item.rarity_color
             else:
-                text = "[" + slot_name + "] -"
+                text = "[{}] -".format(slot_name)
                 color = "#555555"
             lbl = QLabel(text)
-            lbl.setStyleSheet("font-size: 11px; color: " + color + "; padding: 2px;")
+            lbl.setStyleSheet("font-size: 11px; color: {}; padding: 2px;".format(color))
             layout.addWidget(lbl)
 
-        # 分隔线
-        sep = QLabel("─" * 50)
+        sep = QLabel("─" * 60)
         sep.setStyleSheet("color: #333; font-size: 8px;")
         layout.addWidget(sep)
 
-        # 背包区
-        inv_label = QLabel("Backpack ({} items)".format(len(self.hero.inventory)))
+        inv_label = QLabel("背包 ({} 件)".format(len(self.hero.inventory)))
         inv_label.setStyleSheet("font-size: 13px; font-weight: bold; color: #FFAA00; padding: 2px;")
         layout.addWidget(inv_label)
 
-        # 背包列表（可滚动）
         inv_widget = QWidget()
         self.inv_layout = QVBoxLayout(inv_widget)
         self.inv_layout.setSpacing(2)
@@ -316,28 +594,25 @@ class InventoryDialog(QDialog):
             row = QHBoxLayout()
             row.setSpacing(4)
 
-            stat_parts = []
-            if item.hp > 0: stat_parts.append("生命+" + str(item.hp))
-            if item.atk > 0: stat_parts.append("攻击+" + str(item.atk))
-            if item.defense > 0: stat_parts.append("防御+" + str(item.defense))
-            if item.speed > 0: stat_parts.append("速度+" + str(item.speed))
+            cb = QCheckBox()
+            cb.setChecked(idx in self.selected)
+            cb.stateChanged.connect(lambda state, i=idx: self._toggle_select(i, state))
+            row.addWidget(cb, 0)
 
             slot_name = EQUIPMENT_SLOTS[item.slot]["name"]
-            text = "[" + slot_name + "] " + item.name + " (" + item.rarity_name + ") " + " ".join(stat_parts)
+            text = "[{}] {} ({}) {} 评分:{}".format(
+                slot_name, item.name, item.rarity_name, item.get_stat_text(), item.score)
             lbl = QLabel(text)
-            lbl.setStyleSheet("font-size: 10px; color: " + item.rarity_color + ";")
+            lbl.setStyleSheet("font-size: 10px; color: {};".format(item.rarity_color))
             row.addWidget(lbl, 1)
 
-            # 装备按钮
-            btn_equip = QPushButton("E")
-            btn_equip.setFixedSize(28, 22)
+            btn_equip = QPushButton("装备")
+            btn_equip.setFixedSize(36, 22)
             btn_equip.setStyleSheet("QPushButton { font-size: 10px; background-color: #1a1a2e; color: #55CC55; border: 1px solid #336633; } QPushButton:hover { background-color: #2a4a2a; }")
             btn_equip.clicked.connect(lambda checked, i=idx: self._equip_item(i))
             row.addWidget(btn_equip, 0)
 
-            # 出售按钮
-            sell_price = max(1, int(item.total_stats * RARITY_CONFIG[item.rarity]["stat_mult"] * 0.5))
-            btn_sell = QPushButton(str(sell_price) + "g")
+            btn_sell = QPushButton("{}g".format(max(1, int(item.sell_price * self.hero.sell_mult))))
             btn_sell.setFixedSize(42, 22)
             btn_sell.setStyleSheet("QPushButton { font-size: 10px; background-color: #1a1a2e; color: #FF6666; border: 1px solid #663333; } QPushButton:hover { background-color: #3a1a1a; }")
             btn_sell.clicked.connect(lambda checked, i=idx: self._sell_item(i))
@@ -355,21 +630,90 @@ class InventoryDialog(QDialog):
         scroll.setStyleSheet("QScrollArea { border: 1px solid #333; background-color: #0a0a15; }")
         layout.addWidget(scroll, 1)
 
-        # 关闭按钮
-        btn_close = QPushButton("Close")
+        btn_bar = QHBoxLayout()
+        btn_bar.setSpacing(6)
+
+        btn_sel_all = QPushButton("全选")
+        btn_sel_all.setFixedSize(50, 28)
+        btn_sel_all.clicked.connect(self._select_all)
+        btn_bar.addWidget(btn_sel_all)
+
+        btn_sel_none = QPushButton("取消")
+        btn_sel_none.setFixedSize(50, 28)
+        btn_sel_none.clicked.connect(self._select_none)
+        btn_bar.addWidget(btn_sel_none)
+
+        btn_sel_rarity = QComboBox()
+        btn_sel_rarity.setFixedWidth(80)
+        for rk, rc in RARITY_CONFIG.items():
+            btn_sel_rarity.addItem(rc["name"], rk)
+        btn_sel_rarity.currentIndexChanged.connect(lambda: self._select_by_rarity(btn_sel_rarity.currentData()))
+        btn_bar.addWidget(btn_sel_rarity)
+
+        btn_batch_sell = QPushButton("批量售卖")
+        btn_batch_sell.setFixedHeight(28)
+        btn_batch_sell.setStyleSheet("QPushButton { background-color: #3a1a1a; color: #FF6666; border-color: #663333; } QPushButton:hover { background-color: #5a2a2a; }")
+        btn_batch_sell.clicked.connect(self._batch_sell)
+        btn_bar.addWidget(btn_batch_sell)
+
+        btn_merge = QPushButton("合成 (9件同品级)")
+        btn_merge.setFixedHeight(28)
+        btn_merge.setStyleSheet("QPushButton { background-color: #1a1a3a; color: #6666FF; border-color: #333366; } QPushButton:hover { background-color: #2a2a5a; }")
+        btn_merge.clicked.connect(self._merge)
+        btn_bar.addWidget(btn_merge)
+
+        layout.addLayout(btn_bar)
+
+        btn_close = QPushButton("关闭")
         btn_close.clicked.connect(self.close)
         layout.addWidget(btn_close)
 
+    def _toggle_select(self, idx, state):
+        if state:
+            self.selected.add(idx)
+        else:
+            self.selected.discard(idx)
+
+    def _select_all(self):
+        self.selected = set(range(len(self.hero.inventory)))
+        self._refresh()
+
+    def _select_none(self):
+        self.selected.clear()
+        self._refresh()
+
+    def _select_by_rarity(self, rarity):
+        self.selected.clear()
+        for idx, item in enumerate(self.hero.inventory):
+            if item.rarity == rarity:
+                self.selected.add(idx)
+        self._refresh()
+
     def _equip_item(self, index):
         self.hero.equip_from_inventory(index)
+        self.selected.discard(index)
         self._refresh()
 
     def _sell_item(self, index):
-        price = self.hero.sell_from_inventory(index)
+        self.hero.sell_from_inventory(index)
+        self.selected.discard(index)
         self._refresh()
 
+    def _batch_sell(self):
+        if not self.selected:
+            return
+        total = self.hero.sell_batch(sorted(self.selected))
+        self.selected.clear()
+        self._refresh()
+
+    def _merge(self):
+        if len(self.selected) != 9:
+            return
+        if self.hero.merge_equipment(sorted(self.selected)):
+            self.selected.clear()
+            self._refresh()
+
     def _refresh(self):
-        """刷新整个界面 - 关闭并重新打开"""
         parent = self.parent()
         self.close()
         if parent and self.hero:
@@ -383,7 +727,6 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.engine = GameEngine()
         self.save_manager = SaveManager()
-        self._last_inv_count = -1  # 跟踪背包变化
 
         self.setWindowTitle(WINDOW_TITLE)
         self.setFixedSize(WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -493,37 +836,28 @@ class MainWindow(QMainWindow):
         equip_layout.addWidget(self.lbl_armor)
         equip_layout.addWidget(self.lbl_accessory)
 
-        # 背包（可滚动）
-        self.inventory_container = QVBoxLayout()
-        self.inventory_container.setSpacing(2)
-        inventory_widget = QWidget()
-        inventory_widget.setLayout(self.inventory_container)
-        self.inventory_scroll = QScrollArea()
-        self.inventory_scroll.setWidget(inventory_widget)
-        self.inventory_scroll.setWidgetResizable(True)
-        self.inventory_scroll.setFixedHeight(120)
-        self.inventory_scroll.setStyleSheet("QScrollArea { border: 1px solid #333; background-color: #0a0a15; }")
-        equip_layout.addWidget(self.inventory_scroll)
-
         main_layout.addWidget(equip_group)
 
         # === 怪物/战斗区 ===
         monster_group = QGroupBox("战斗")
         monster_layout = QVBoxLayout(monster_group)
+        monster_layout.setSpacing(10)
 
         self.monster_widget = MonsterWidget()
         monster_layout.addWidget(self.monster_widget)
 
         stage_layout = QHBoxLayout()
+        stage_layout.setSpacing(8)
         self.lbl_difficulty = QLabel("[普通]")
         self.lbl_difficulty.setStyleSheet("font-size: 11px; color: #CCCCCC; font-weight: bold;")
+        self.lbl_difficulty.setFixedWidth(40)
         stage_layout.addWidget(self.lbl_difficulty)
         self.lbl_stage = QLabel("第 1 关 - 黑暗森林")
         self.lbl_stage.setStyleSheet("font-size: 11px; color: #AAAAAA;")
-        stage_layout.addWidget(self.lbl_stage)
-        stage_layout.addStretch()
+        stage_layout.addWidget(self.lbl_stage, 1)
         self.lbl_progress = QLabel("进度: 0/30")
         self.lbl_progress.setStyleSheet("font-size: 11px; color: #AAAAAA;")
+        self.lbl_progress.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         stage_layout.addWidget(self.lbl_progress)
         monster_layout.addLayout(stage_layout)
 
@@ -549,15 +883,19 @@ class MainWindow(QMainWindow):
         self.btn_resurrect.setVisible(False)
         btn_layout.addWidget(self.btn_resurrect)
 
-        self.btn_skill = QPushButton("Skill")
+        self.btn_skill = QPushButton("技能")
         self.btn_skill.clicked.connect(self._on_skill_tree)
         btn_layout.addWidget(self.btn_skill)
 
-        self.btn_inventory = QPushButton("Bag")
+        self.btn_talent = QPushButton("天赋")
+        self.btn_talent.clicked.connect(self._on_talent_tree)
+        btn_layout.addWidget(self.btn_talent)
+
+        self.btn_inventory = QPushButton("背包")
         self.btn_inventory.clicked.connect(self._on_inventory)
         btn_layout.addWidget(self.btn_inventory)
 
-        self.btn_new = QPushButton("New")
+        self.btn_new = QPushButton("新建")
         self.btn_new.clicked.connect(self._on_new_game)
         btn_layout.addWidget(self.btn_new)
 
@@ -636,9 +974,6 @@ class MainWindow(QMainWindow):
                 lbl.setText("[" + slot_name + "] -")
                 lbl.setStyleSheet("font-size: 11px; color: #555555;")
 
-        # Update inventory display
-        self._update_inventory()
-
         self.monster_widget.update_monster(self.engine.current_monster)
 
         diff_name = self.engine.get_difficulty_name()
@@ -655,77 +990,7 @@ class MainWindow(QMainWindow):
         self.btn_resurrect.setVisible(is_dead)
         self.btn_new.setVisible(not is_dead)
 
-    def _update_inventory(self):
-        """更新背包显示 - 仅在背包变化时重建"""
-        hero = self.engine.hero
-        if not hero:
-            return
-
-        # 仅在背包数量变化时重建
-        inv_count = len(hero.inventory)
-        if inv_count == self._last_inv_count:
-            return
-        self._last_inv_count = inv_count
-
-        # 清空旧widget
-        self._clear_inv_container()
-
-        # 显示背包物品
-        for idx, item in enumerate(hero.inventory):
-            row = QHBoxLayout()
-            row.setSpacing(4)
-
-            stat_parts = []
-            if item.hp > 0: stat_parts.append("生命+" + str(item.hp))
-            if item.atk > 0: stat_parts.append("攻击+" + str(item.atk))
-            if item.defense > 0: stat_parts.append("防御+" + str(item.defense))
-            if item.speed > 0: stat_parts.append("速度+" + str(item.speed))
-
-            slot_name = EQUIPMENT_SLOTS[item.slot]["name"]
-            text = "[" + slot_name + "] " + item.name + " (" + item.rarity_name + ") " + " ".join(stat_parts)
-            lbl = QLabel(text)
-            lbl.setStyleSheet("font-size: 10px; color: " + item.rarity_color + ";")
-            row.addWidget(lbl, 1)
-
-            btn = QPushButton("装")
-            btn.setFixedSize(24, 20)
-            btn.setStyleSheet("QPushButton { font-size: 10px; background-color: #1a1a2e; color: #55CC55; border: 1px solid #336633; } QPushButton:hover { background-color: #2a4a2a; }")
-            btn.clicked.connect(lambda checked, i=idx: self._equip_from_inventory(i))
-            row.addWidget(btn, 0)
-
-            row_widget = QWidget()
-            row_widget.setLayout(row)
-            self.inventory_container.addWidget(row_widget)
-
-        # Add stretch at bottom
-        self.inventory_container.addStretch()
-
-    def _clear_inv_container(self):
-        """清空背包容器"""
-        while self.inventory_container.count():
-            child = self.inventory_container.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
-            elif child.layout():
-                self._clear_inv_container_sub(child.layout())
-
-    def _clear_inv_container_sub(self, layout):
-        while layout.count():
-            child = layout.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
-            elif child.layout():
-                self._clear_inv_container_sub(child.layout())
-
-    def _equip_from_inventory(self, index):
-        """从背包装备物品"""
-        hero = self.engine.hero
-        if hero:
-            hero.equip_from_inventory(index)
-            self._last_inv_count = -1  # 强制刷新
-
     def _on_new_game(self):
-        self._last_inv_count = -1  # 重置背包缓存
         dialog = NewGameDialog(self)
         if dialog.exec_() == QDialog.Accepted:
             data = dialog.get_data()
@@ -739,11 +1004,15 @@ class MainWindow(QMainWindow):
             dlg = SkillTreeDialog(self.engine.hero, self)
             dlg.exec_()
 
+    def _on_talent_tree(self):
+        if self.engine.hero:
+            dlg = TalentTreeDialog(self.engine.hero, self)
+            dlg.exec_()
+
     def _on_inventory(self):
         if self.engine.hero:
             dlg = InventoryDialog(self.engine.hero, self)
             dlg.exec_()
-            self._last_inv_count = -1  # 强制刷新主界面背包
 
     def _on_save(self):
         if self.engine.hero:

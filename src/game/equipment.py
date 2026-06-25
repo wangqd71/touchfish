@@ -79,6 +79,16 @@ class Equipment:
     def total_stats(self):
         return self.hp + self.atk + self.defense + self.speed
 
+    @property
+    def score(self):
+        """装备评分 = 属性总和 × 品级倍率"""
+        return int(self.total_stats * self.rarity_config["stat_mult"])
+
+    @property
+    def sell_price(self):
+        """售卖价格"""
+        return max(1, int(self.total_stats * self.rarity_config["stat_mult"] * 0.5))
+
     def get_stat_text(self):
         parts = []
         if self.hp > 0:

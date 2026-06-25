@@ -104,7 +104,7 @@ class GameEngine:
 
             # 掉落
             is_boss = self.state == GameState.BOSS
-            loot = LootTable.roll(self.stage, is_boss, self.chapter)
+            loot = LootTable.roll(self.stage, is_boss, self.chapter, self.hero.drop_rate_bonus)
             for item in loot.items:
                 self.log("获得 [{}] {}!".format(item.rarity_name, item.name))
                 self._auto_equip(item)

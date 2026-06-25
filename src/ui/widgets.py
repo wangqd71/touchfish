@@ -48,6 +48,7 @@ class StatLabel(QLabel):
             }}
         """)
         self.setFont(QFont("Microsoft YaHei", 9))
+        self.setMinimumWidth(100)
 
 
 class DarkWidget(QWidget):
@@ -320,10 +321,10 @@ class MonsterWidget(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedHeight(100)
+        self.setFixedHeight(110)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setContentsMargins(4, 2, 4, 2)
         layout.setSpacing(10)
 
         # 像素怪物
@@ -332,8 +333,8 @@ class MonsterWidget(QWidget):
 
         # 右侧信息
         right = QVBoxLayout()
-        right.setSpacing(6)
-        right.setContentsMargins(0, 4, 4, 4)
+        right.setSpacing(2)
+        right.setContentsMargins(0, 2, 4, 2)
 
         self.name_label = QLabel("等待怪物...")
         self.name_label.setStyleSheet("""
@@ -351,7 +352,7 @@ class MonsterWidget(QWidget):
         self.hp_bar.setFixedHeight(18)
         right.addWidget(self.hp_bar)
 
-        layout.addLayout(right, 1)
+        right.addStretch()
 
         layout.addLayout(right, 1)
 

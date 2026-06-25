@@ -393,3 +393,118 @@ GOLD_GROWTH = 6
 GOLD_COLOR = "#FFD700"
 HP_COLOR   = "#FF4444"
 EXP_COLOR  = "#44AAFF"
+
+# ============================================================
+# 天赋树系统（使用金币点亮，全局生效）
+# ============================================================
+# 天赋费用：每级花费，5级满
+TALENT_COSTS = [80, 200, 400, 800, 1500]
+
+TALENT_TREES = {
+    "fortune": {
+        "name": "财富",
+        "icon": "💰",
+        "desc": "提升金币与经验获取",
+        "color": "#FFD700",
+        "talents": [
+            {
+                "id": "t_gold_find",
+                "name": "聚财术",
+                "desc": "金币获取+{value}%",
+                "icon": "💰",
+                "max_rank": 5,
+                "effect_key": "gold_mult",
+                "effect_per_rank": 0.04,
+            },
+            {
+                "id": "t_exp_boost",
+                "name": "博学",
+                "desc": "经验获取+{value}%",
+                "icon": "📖",
+                "max_rank": 5,
+                "effect_key": "exp_mult",
+                "effect_per_rank": 0.05,
+            },
+            {
+                "id": "t_treasure_hunter",
+                "name": "寻宝直觉",
+                "desc": "装备掉落率+{value}%",
+                "icon": "🗝️",
+                "max_rank": 5,
+                "effect_key": "drop_rate",
+                "effect_per_rank": 0.04,
+            },
+            {
+                "id": "t_bargain",
+                "name": "讨价还价",
+                "desc": "装备售价+{value}%",
+                "icon": "🏷️",
+                "max_rank": 5,
+                "effect_key": "sell_mult",
+                "effect_per_rank": 0.06,
+            },
+            {
+                "id": "t_gold_rush",
+                "name": "黄金狂热",
+                "desc": "金币获取额外+{value}%",
+                "icon": "✨",
+                "max_rank": 5,
+                "effect_key": "gold_mult",
+                "effect_per_rank": 0.06,
+            },
+        ],
+    },
+    "war": {
+        "name": "战争",
+        "icon": "⚔️",
+        "desc": "提升战斗属性",
+        "color": "#FF4444",
+        "talents": [
+            {
+                "id": "t_atk_boost",
+                "name": "力量强化",
+                "desc": "攻击力+{value}%",
+                "icon": "⚔️",
+                "max_rank": 5,
+                "effect_key": "atk_mult",
+                "effect_per_rank": 0.03,
+            },
+            {
+                "id": "t_def_boost",
+                "name": "坚韧体魄",
+                "desc": "防御力+{value}%",
+                "icon": "🛡️",
+                "max_rank": 5,
+                "effect_key": "def_mult",
+                "effect_per_rank": 0.03,
+            },
+            {
+                "id": "t_hp_boost",
+                "name": "生命力",
+                "desc": "生命值+{value}%",
+                "icon": "❤️",
+                "max_rank": 5,
+                "effect_key": "hp_mult",
+                "effect_per_rank": 0.04,
+            },
+            {
+                "id": "t_crit_boost",
+                "name": "致命精准",
+                "desc": "暴击率+{value}%",
+                "icon": "💥",
+                "max_rank": 5,
+                "effect_key": "crit_rate",
+                "effect_per_rank": 0.015,
+            },
+            {
+                "id": "t_dmg_boost",
+                "name": "战争之王",
+                "desc": "全伤害+{value}%",
+                "icon": "👑",
+                "max_rank": 5,
+                "effect_key": "dmg_mult",
+                "effect_per_rank": 0.04,
+            },
+        ],
+    },
+}
