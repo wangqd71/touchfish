@@ -345,6 +345,24 @@ class MainWindow(QMainWindow):
 
         main_layout.addWidget(hero_group)
 
+        # === 装备栏 ===
+        equip_group = QGroupBox("Equipment")
+        equip_layout = QVBoxLayout(equip_group)
+        equip_layout.setSpacing(2)
+
+        self.lbl_weapon = QLabel("[ - ]")
+        self.lbl_weapon.setStyleSheet("font-size: 11px; color: #AAAAAA;")
+        self.lbl_armor = QLabel("[ - ]")
+        self.lbl_armor.setStyleSheet("font-size: 11px; color: #AAAAAA;")
+        self.lbl_accessory = QLabel("[ - ]")
+        self.lbl_accessory.setStyleSheet("font-size: 11px; color: #AAAAAA;")
+
+        equip_layout.addWidget(self.lbl_weapon)
+        equip_layout.addWidget(self.lbl_armor)
+        equip_layout.addWidget(self.lbl_accessory)
+
+        main_layout.addWidget(equip_group)
+
         # === 怪物/战斗区 ===
         monster_group = QGroupBox("战斗")
         monster_layout = QVBoxLayout(monster_group)
@@ -443,9 +461,32 @@ class MainWindow(QMainWindow):
         self.lbl_atk.setText(f"⚔️ 攻击: {hero.atk}")
         self.lbl_def.setText(f"🛡️ 防御: {hero.defense}")
         self.lbl_spd.setText(f"💨 速度: {hero.speed:.1f}")
-        self.lbl_gold.setText(f"💰 金币: {hero.gold}")
-        self.lbl_sp.setText(f"🔮 技能点: {hero.skill_points}")
-        self.lbl_crit.setText(f"💥 暴击: {hero.crit_rate*100:.0f}%")
+        self.lbl_gold.setText("Gold: {}".format(hero.gold))
+        self.lbl_sp.setText("SP: {}".format(hero.skill_points))
+        self.lbl_crit.setText("Crit: {}%".format(int(hero.crit_rate*100)))
+
+        # Update equipment display
+        for slot_key, lbl in [("weapon", self.lbl_weapon),
+                               ("armor", self.lbl_armor),
+                               ("accessory", self.lbl_accessory)]:
+            item = hero.equipment.get(slot_key)
+            if item:
+                stat_parts = []
+                if item.hp > 0: stat_parts.append("HP+" + str(item.hp))
+                if item.atk > 0: stat_parts.append("ATK+" + str(item.atk))
+                if item.defense > 0: stat_parts.append("DEF+" + str(item.defense))
+                if item.speed > 0: stat_parts.append("SPD+" + str(item.speed))
+                stat_str = " ".join(stat_parts)
+                slot_name = EQUIPMENT_SLOTS[slot_key]["name"]
+                rname = item.rarity_name
+                rcolor = item.rarity_color
+                text = "[" + slot_name + "] " + item.name + " (" + rname + ") " + stat_str
+                lbl.setText(text)
+                lbl.setStyleSheet("font-size: 11px; color: " + rcolor + ";")
+            else:
+                slot_name = EQUIPMENT_SLOTS[slot_key]["name"]
+                lbl.setText("[" + slot_name + "] -")
+                lbl.setStyleSheet("font-size: 11px; color: #555555;")
 
         self.monster_widget.update_monster(self.engine.current_monster)
 
