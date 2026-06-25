@@ -128,7 +128,7 @@ class MonsterWidget(QWidget):
     def update_monster(self, monster):
         """更新怪物显示"""
         if monster:
-            self.name_label.setText(f"{monster.emoji} {monster.name} Lv.{monster.level}")
+            self.name_label.setText(f"{monster.name} Lv.{monster.level}")
             self.hp_bar.setValue(int(monster.hp_percent * 100))
         else:
             self.name_label.setText("等待怪物...")
