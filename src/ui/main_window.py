@@ -152,8 +152,8 @@ class SkillTreeDialog(QDialog):
     def __init__(self, hero, parent=None):
         super().__init__(parent)
         self.hero = hero
-        self.setWindowTitle(f"技能树 - {hero.name}")
-        self.setFixedSize(480, 520)
+        self.setWindowTitle("Skill Tree - " + hero.name)
+        self.setFixedSize(560, 600)
         self.setStyleSheet(DARK_STYLE)
         self._build_ui()
 
@@ -161,14 +161,14 @@ class SkillTreeDialog(QDialog):
         layout = QVBoxLayout(self)
 
         # 技能点显示
-        sp_label = QLabel(f"可用技能点: {self.hero.skill_points}")
+        sp_label = QLabel("Available Points: " + str(self.hero.skill_points))
         sp_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #FFAA00;")
         sp_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(sp_label)
 
         tree_info = self.hero.get_skill_tree_info()
         if not tree_info:
-            layout.addWidget(QLabel("无技能树数据"))
+            layout.addWidget(QLabel("No skill tree"))
             return
 
         # 用Tab展示3条分支
@@ -178,7 +178,7 @@ class SkillTreeDialog(QDialog):
             tab_layout = QVBoxLayout(tab)
 
             # 分支描述
-            desc_label = QLabel(f"{binfo['desc']}")
+            desc_label = QLabel(binfo["desc"])
             desc_label.setStyleSheet("color: #888; font-size: 11px;")
             tab_layout.addWidget(desc_label)
 
@@ -190,36 +190,40 @@ class SkillTreeDialog(QDialog):
                         background-color: #1a1a2e;
                         border: 1px solid #333;
                         border-radius: 4px;
-                        padding: 4px;
+                        padding: 6px;
                     }
                 """)
                 s_layout = QHBoxLayout(frame)
+                s_layout.setSpacing(8)
 
                 # 技能信息
                 info_layout = QVBoxLayout()
-                name_text = f"{skill['name']}  [{skill['current_rank']}/{skill['max_rank']}]"
+                name_text = skill["name"] + "  [" + str(skill["current_rank"]) + "/" + str(skill["max_rank"]) + "]"
                 name_label = QLabel(name_text)
-                name_label.setStyleSheet("font-size: 12px; font-weight: bold; color: #FFAA00;")
+                name_label.setStyleSheet("font-size: 13px; font-weight: bold; color: #FFAA00;")
+                name_label.setWordWrap(True)
                 info_layout.addWidget(name_label)
 
-                desc_label = QLabel(f"{skill['desc']}  (需要Lv.{skill['req_level']})")
-                desc_label.setStyleSheet("font-size: 10px; color: #888;")
+                desc_text = skill["desc"] + "  (Lv." + str(skill["req_level"]) + ")"
+                desc_label = QLabel(desc_text)
+                desc_label.setStyleSheet("font-size: 11px; color: #888;")
+                desc_label.setWordWrap(True)
                 info_layout.addWidget(desc_label)
 
-                s_layout.addLayout(info_layout)
+                s_layout.addLayout(info_layout, 1)
 
                 # 学习按钮
-                btn = QPushButton("学习")
-                btn.setFixedSize(50, 30)
+                btn = QPushButton("Learn")
+                btn.setFixedSize(60, 32)
                 if skill["can_learn"]:
                     btn.setStyleSheet("""
-                        QPushButton { background-color: #2a4a2a; color: #55CC55; border-color: #336633; }
+                        QPushButton { background-color: #2a4a2a; color: #55CC55; border-color: #336633; font-size: 12px; }
                         QPushButton:hover { background-color: #3a6a3a; }
                     """)
                     btn.clicked.connect(lambda checked, sid=skill["id"]: self._learn(sid))
                 else:
                     btn.setEnabled(False)
-                s_layout.addWidget(btn)
+                s_layout.addWidget(btn, 0)
 
                 tab_layout.addWidget(frame)
 
@@ -229,7 +233,7 @@ class SkillTreeDialog(QDialog):
         layout.addWidget(tabs)
 
         # 关闭按钮
-        btn_close = QPushButton("关闭")
+        btn_close = QPushButton("Close")
         btn_close.clicked.connect(self.close)
         layout.addWidget(btn_close)
 
