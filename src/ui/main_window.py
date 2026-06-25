@@ -239,24 +239,24 @@ class SkillTreeDialog(QDialog):
 
     def _learn(self, skill_id):
         if self.hero.learn_skill(skill_id):
-            # 先清空layout中的所有widget
+            # 删除所有顶级widget（tabs和close按钮会自动清理子内容）
             layout = self.layout()
             while layout.count():
                 child = layout.takeAt(0)
-                if child.widget():
-                    child.widget().deleteLater()
-                elif child.layout():
-                    self._clear_layout(child.layout())
+                w = child.widget()
+                if w:
+                    w.setParent(None)
+                    w.deleteLater()
             self._build_ui()
 
     def _clear_layout(self, layout):
-        """递归清空layout"""
+        """清空layout中的widget"""
         while layout.count():
             child = layout.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
-            elif child.layout():
-                self._clear_layout(child.layout())
+            w = child.widget()
+            if w:
+                w.setParent(None)
+                w.deleteLater()
 
 
 class MainWindow(QMainWindow):

@@ -320,11 +320,11 @@ class MonsterWidget(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedHeight(90)
+        self.setFixedHeight(100)
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
-        layout.setSpacing(8)
+        layout.setSpacing(10)
 
         # 像素怪物
         self.canvas = MonsterCanvas()
@@ -332,7 +332,8 @@ class MonsterWidget(QWidget):
 
         # 右侧信息
         right = QVBoxLayout()
-        right.setSpacing(2)
+        right.setSpacing(6)
+        right.setContentsMargins(0, 4, 4, 4)
 
         self.name_label = QLabel("等待怪物...")
         self.name_label.setStyleSheet("""
@@ -340,12 +341,17 @@ class MonsterWidget(QWidget):
                 color: #FF6666;
                 font-size: 14px;
                 font-weight: bold;
+                padding: 2px;
             }
         """)
+        self.name_label.setMinimumHeight(20)
         right.addWidget(self.name_label)
 
         self.hp_bar = DarkProgressBar("#FF4444")
+        self.hp_bar.setFixedHeight(18)
         right.addWidget(self.hp_bar)
+
+        layout.addLayout(right, 1)
 
         layout.addLayout(right, 1)
 
