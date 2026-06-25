@@ -239,12 +239,24 @@ class SkillTreeDialog(QDialog):
 
     def _learn(self, skill_id):
         if self.hero.learn_skill(skill_id):
-            # 刷新界面
-            for i in range(self.layout().count()):
-                widget = self.layout().itemAt(i).widget()
-                if widget:
-                    widget.deleteLater()
+            # 先清空layout中的所有widget
+            layout = self.layout()
+            while layout.count():
+                child = layout.takeAt(0)
+                if child.widget():
+                    child.widget().deleteLater()
+                elif child.layout():
+                    self._clear_layout(child.layout())
             self._build_ui()
+
+    def _clear_layout(self, layout):
+        """递归清空layout"""
+        while layout.count():
+            child = layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+            elif child.layout():
+                self._clear_layout(child.layout())
 
 
 class MainWindow(QMainWindow):
@@ -253,6 +265,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.engine = GameEngine()
         self.save_manager = SaveManager()
+        self._last_inv_count = -1  # 跟踪背包变化
 
         self.setWindowTitle(WINDOW_TITLE)
         self.setFixedSize(WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -521,18 +534,21 @@ class MainWindow(QMainWindow):
         self.btn_new.setVisible(not is_dead)
 
     def _update_inventory(self):
-        """更新背包显示"""
+        """更新背包显示 - 仅在背包变化时重建"""
         hero = self.engine.hero
         if not hero:
             return
 
-        # Clear old inventory widgets
-        while self.inventory_container.count():
-            child = self.inventory_container.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
+        # 仅在背包数量变化时重建
+        inv_count = len(hero.inventory)
+        if inv_count == self._last_inv_count:
+            return
+        self._last_inv_count = inv_count
 
-        # Show inventory items
+        # 清空旧widget
+        self._clear_inv_container()
+
+        # 显示背包物品
         for idx, item in enumerate(hero.inventory):
             row = QHBoxLayout()
             row.setSpacing(4)
@@ -562,13 +578,32 @@ class MainWindow(QMainWindow):
         # Add stretch at bottom
         self.inventory_container.addStretch()
 
+    def _clear_inv_container(self):
+        """清空背包容器"""
+        while self.inventory_container.count():
+            child = self.inventory_container.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+            elif child.layout():
+                self._clear_inv_container_sub(child.layout())
+
+    def _clear_inv_container_sub(self, layout):
+        while layout.count():
+            child = layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+            elif child.layout():
+                self._clear_inv_container_sub(child.layout())
+
     def _equip_from_inventory(self, index):
         """从背包装备物品"""
         hero = self.engine.hero
         if hero:
             hero.equip_from_inventory(index)
+            self._last_inv_count = -1  # 强制刷新
 
     def _on_new_game(self):
+        self._last_inv_count = -1  # 重置背包缓存
         dialog = NewGameDialog(self)
         if dialog.exec_() == QDialog.Accepted:
             data = dialog.get_data()
