@@ -350,6 +350,7 @@ class MainWindow(QMainWindow):
         equip_layout = QVBoxLayout(equip_group)
         equip_layout.setSpacing(2)
 
+        # 已装备
         self.lbl_weapon = QLabel("[ - ]")
         self.lbl_weapon.setStyleSheet("font-size: 11px; color: #AAAAAA;")
         self.lbl_armor = QLabel("[ - ]")
@@ -360,6 +361,18 @@ class MainWindow(QMainWindow):
         equip_layout.addWidget(self.lbl_weapon)
         equip_layout.addWidget(self.lbl_armor)
         equip_layout.addWidget(self.lbl_accessory)
+
+        # 背包（可滚动）
+        self.inventory_container = QVBoxLayout()
+        self.inventory_container.setSpacing(2)
+        inventory_widget = QWidget()
+        inventory_widget.setLayout(self.inventory_container)
+        self.inventory_scroll = QScrollArea()
+        self.inventory_scroll.setWidget(inventory_widget)
+        self.inventory_scroll.setWidgetResizable(True)
+        self.inventory_scroll.setFixedHeight(120)
+        self.inventory_scroll.setStyleSheet("QScrollArea { border: 1px solid #333; background-color: #0a0a15; }")
+        equip_layout.addWidget(self.inventory_scroll)
 
         main_layout.addWidget(equip_group)
 
@@ -488,6 +501,9 @@ class MainWindow(QMainWindow):
                 lbl.setText("[" + slot_name + "] -")
                 lbl.setStyleSheet("font-size: 11px; color: #555555;")
 
+        # Update inventory display
+        self._update_inventory()
+
         self.monster_widget.update_monster(self.engine.current_monster)
 
         diff_name = self.engine.get_difficulty_name()
@@ -503,6 +519,54 @@ class MainWindow(QMainWindow):
         is_dead = self.engine.state == GameState.DEAD
         self.btn_resurrect.setVisible(is_dead)
         self.btn_new.setVisible(not is_dead)
+
+    def _update_inventory(self):
+        """更新背包显示"""
+        hero = self.engine.hero
+        if not hero:
+            return
+
+        # Clear old inventory widgets
+        while self.inventory_container.count():
+            child = self.inventory_container.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+
+        # Show inventory items
+        for idx, item in enumerate(hero.inventory):
+            row = QHBoxLayout()
+            row.setSpacing(4)
+
+            stat_parts = []
+            if item.hp > 0: stat_parts.append("HP+" + str(item.hp))
+            if item.atk > 0: stat_parts.append("ATK+" + str(item.atk))
+            if item.defense > 0: stat_parts.append("DEF+" + str(item.defense))
+            if item.speed > 0: stat_parts.append("SPD+" + str(item.speed))
+
+            slot_name = EQUIPMENT_SLOTS[item.slot]["name"]
+            text = "[" + slot_name + "] " + item.name + " (" + item.rarity_name + ") " + " ".join(stat_parts)
+            lbl = QLabel(text)
+            lbl.setStyleSheet("font-size: 10px; color: " + item.rarity_color + ";")
+            row.addWidget(lbl, 1)
+
+            btn = QPushButton("E")
+            btn.setFixedSize(24, 20)
+            btn.setStyleSheet("QPushButton { font-size: 10px; background-color: #1a1a2e; color: #55CC55; border: 1px solid #336633; } QPushButton:hover { background-color: #2a4a2a; }")
+            btn.clicked.connect(lambda checked, i=idx: self._equip_from_inventory(i))
+            row.addWidget(btn, 0)
+
+            row_widget = QWidget()
+            row_widget.setLayout(row)
+            self.inventory_container.addWidget(row_widget)
+
+        # Add stretch at bottom
+        self.inventory_container.addStretch()
+
+    def _equip_from_inventory(self, index):
+        """从背包装备物品"""
+        hero = self.engine.hero
+        if hero:
+            hero.equip_from_inventory(index)
 
     def _on_new_game(self):
         dialog = NewGameDialog(self)

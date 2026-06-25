@@ -161,8 +161,11 @@ class GameEngine:
         if current is None or item.total_stats > current.total_stats:
             old = self.hero.equip(item)
             if old:
+                self.hero.add_to_inventory(old)
                 self.log("替换 [{}] {}".format(old.rarity_name, old.name))
             self.log("装备 [{}] {}".format(item.rarity_name, item.name))
+        else:
+            self.hero.add_to_inventory(item)
 
     def resurrect(self):
         if self.hero and not self.hero.is_alive:

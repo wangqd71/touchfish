@@ -25,6 +25,9 @@ class Hero:
             SLOT_ACCESSORY: None,
         }
 
+        # 背包（所有获得的装备）
+        self.inventory = []
+
         # 技能系统（必须在current_hp之前初始化）
         self.skill_points = 0
         self.learned_skills = {}  # {skill_id: rank}
@@ -176,6 +179,19 @@ class Hero:
         self.current_hp = min(self.current_hp, self.max_hp)
         return old
 
+    def add_to_inventory(self, item):
+        """添加装备到背包"""
+        self.inventory.append(item)
+
+    def equip_from_inventory(self, index):
+        """从背包中装备指定索引的装备，返回被替换的装备"""
+        if index < 0 or index >= len(self.inventory):
+            return None
+        item = self.inventory[index]
+        old = self.equip(item)
+        self.inventory.pop(index)
+        return old
+
     # ---- 技能系统 ----
 
     def learn_skill(self, skill_id):
@@ -255,6 +271,7 @@ class Hero:
             "current_hp": self.current_hp,
             "equipment": {slot: item.get_save_data() if item else None
                           for slot, item in self.equipment.items()},
+            "inventory": [item.get_save_data() for item in self.inventory],
             "skill_points": self.skill_points,
             "learned_skills": self.learned_skills,
             "total_kills": self.total_kills,
@@ -277,5 +294,6 @@ class Hero:
         for slot, item_data in data.get("equipment", {}).items():
             if item_data:
                 hero.equipment[slot] = Equipment.from_save_data(item_data)
+        hero.inventory = [Equipment.from_save_data(d) for d in data.get("inventory", [])]
         hero.current_hp = min(data["current_hp"], hero.max_hp)
         return hero
