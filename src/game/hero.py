@@ -192,6 +192,19 @@ class Hero:
         self.inventory.pop(index)
         return old
 
+    def sell_from_inventory(self, index):
+        """出售背包中指定索引的装备，返回获得的金币"""
+        if index < 0 or index >= len(self.inventory):
+            return 0
+        item = self.inventory[index]
+        # 卖价 = 基础属性总和 × 品级倍率 × 0.5
+        sell_price = int(item.total_stats * RARITY_CONFIG[item.rarity]["stat_mult"] * 0.5)
+        sell_price = max(1, sell_price)
+        self.gold += sell_price
+        self.total_gold_earned += sell_price
+        self.inventory.pop(index)
+        return sell_price
+
     # ---- 技能系统 ----
 
     def learn_skill(self, skill_id):

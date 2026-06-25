@@ -259,6 +259,127 @@ class SkillTreeDialog(QDialog):
                 w.deleteLater()
 
 
+class InventoryDialog(QDialog):
+    """背包栏对话框 - 展示所有装备+出售功能"""
+    def __init__(self, hero, parent=None):
+        super().__init__(parent)
+        self.hero = hero
+        self.setWindowTitle("Inventory")
+        self.setFixedSize(520, 600)
+        self.setStyleSheet(DARK_STYLE)
+        self._build_ui()
+
+    def _build_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setSpacing(4)
+
+        # 已装备区
+        equip_label = QLabel("Equipped")
+        equip_label.setStyleSheet("font-size: 13px; font-weight: bold; color: #FFAA00; padding: 2px;")
+        layout.addWidget(equip_label)
+
+        for slot_key in ["weapon", "armor", "accessory"]:
+            item = self.hero.equipment.get(slot_key)
+            slot_name = EQUIPMENT_SLOTS[slot_key]["name"]
+            if item:
+                stat_parts = []
+                if item.hp > 0: stat_parts.append("生命+" + str(item.hp))
+                if item.atk > 0: stat_parts.append("攻击+" + str(item.atk))
+                if item.defense > 0: stat_parts.append("防御+" + str(item.defense))
+                if item.speed > 0: stat_parts.append("速度+" + str(item.speed))
+                text = "[" + slot_name + "] " + item.name + " (" + item.rarity_name + ") " + " ".join(stat_parts)
+                color = item.rarity_color
+            else:
+                text = "[" + slot_name + "] -"
+                color = "#555555"
+            lbl = QLabel(text)
+            lbl.setStyleSheet("font-size: 11px; color: " + color + "; padding: 2px;")
+            layout.addWidget(lbl)
+
+        # 分隔线
+        sep = QLabel("─" * 50)
+        sep.setStyleSheet("color: #333; font-size: 8px;")
+        layout.addWidget(sep)
+
+        # 背包区
+        inv_label = QLabel("Backpack ({} items)".format(len(self.hero.inventory)))
+        inv_label.setStyleSheet("font-size: 13px; font-weight: bold; color: #FFAA00; padding: 2px;")
+        layout.addWidget(inv_label)
+
+        # 背包列表（可滚动）
+        inv_widget = QWidget()
+        self.inv_layout = QVBoxLayout(inv_widget)
+        self.inv_layout.setSpacing(2)
+        self.inv_layout.setContentsMargins(0, 0, 0, 0)
+
+        for idx, item in enumerate(self.hero.inventory):
+            row = QHBoxLayout()
+            row.setSpacing(4)
+
+            stat_parts = []
+            if item.hp > 0: stat_parts.append("生命+" + str(item.hp))
+            if item.atk > 0: stat_parts.append("攻击+" + str(item.atk))
+            if item.defense > 0: stat_parts.append("防御+" + str(item.defense))
+            if item.speed > 0: stat_parts.append("速度+" + str(item.speed))
+
+            slot_name = EQUIPMENT_SLOTS[item.slot]["name"]
+            text = "[" + slot_name + "] " + item.name + " (" + item.rarity_name + ") " + " ".join(stat_parts)
+            lbl = QLabel(text)
+            lbl.setStyleSheet("font-size: 10px; color: " + item.rarity_color + ";")
+            row.addWidget(lbl, 1)
+
+            # 装备按钮
+            btn_equip = QPushButton("E")
+            btn_equip.setFixedSize(28, 22)
+            btn_equip.setStyleSheet("QPushButton { font-size: 10px; background-color: #1a1a2e; color: #55CC55; border: 1px solid #336633; } QPushButton:hover { background-color: #2a4a2a; }")
+            btn_equip.clicked.connect(lambda checked, i=idx: self._equip_item(i))
+            row.addWidget(btn_equip, 0)
+
+            # 出售按钮
+            sell_price = max(1, int(item.total_stats * RARITY_CONFIG[item.rarity]["stat_mult"] * 0.5))
+            btn_sell = QPushButton(str(sell_price) + "g")
+            btn_sell.setFixedSize(42, 22)
+            btn_sell.setStyleSheet("QPushButton { font-size: 10px; background-color: #1a1a2e; color: #FF6666; border: 1px solid #663333; } QPushButton:hover { background-color: #3a1a1a; }")
+            btn_sell.clicked.connect(lambda checked, i=idx: self._sell_item(i))
+            row.addWidget(btn_sell, 0)
+
+            row_widget = QWidget()
+            row_widget.setLayout(row)
+            self.inv_layout.addWidget(row_widget)
+
+        self.inv_layout.addStretch()
+
+        scroll = QScrollArea()
+        scroll.setWidget(inv_widget)
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet("QScrollArea { border: 1px solid #333; background-color: #0a0a15; }")
+        layout.addWidget(scroll, 1)
+
+        # 关闭按钮
+        btn_close = QPushButton("Close")
+        btn_close.clicked.connect(self.close)
+        layout.addWidget(btn_close)
+
+    def _equip_item(self, index):
+        self.hero.equip_from_inventory(index)
+        self._refresh()
+
+    def _sell_item(self, index):
+        price = self.hero.sell_from_inventory(index)
+        self._refresh()
+
+    def _refresh(self):
+        """刷新整个界面"""
+        layout = self.layout()
+        while layout.count():
+            child = layout.takeAt(0)
+            w = child.widget()
+            if w:
+                w.setParent(None)
+                w.deleteLater()
+        self._build_ui()
+
+
 class MainWindow(QMainWindow):
     """主窗口"""
     def __init__(self):
@@ -431,11 +552,15 @@ class MainWindow(QMainWindow):
         self.btn_resurrect.setVisible(False)
         btn_layout.addWidget(self.btn_resurrect)
 
-        self.btn_skill = QPushButton("🔮 技能")
+        self.btn_skill = QPushButton("Skill")
         self.btn_skill.clicked.connect(self._on_skill_tree)
         btn_layout.addWidget(self.btn_skill)
 
-        self.btn_new = QPushButton("🆕 新游戏")
+        self.btn_inventory = QPushButton("Bag")
+        self.btn_inventory.clicked.connect(self._on_inventory)
+        btn_layout.addWidget(self.btn_inventory)
+
+        self.btn_new = QPushButton("New")
         self.btn_new.clicked.connect(self._on_new_game)
         btn_layout.addWidget(self.btn_new)
 
@@ -616,6 +741,12 @@ class MainWindow(QMainWindow):
         if self.engine.hero:
             dlg = SkillTreeDialog(self.engine.hero, self)
             dlg.exec_()
+
+    def _on_inventory(self):
+        if self.engine.hero:
+            dlg = InventoryDialog(self.engine.hero, self)
+            dlg.exec_()
+            self._last_inv_count = -1  # 强制刷新主界面背包
 
     def _on_save(self):
         if self.engine.hero:
