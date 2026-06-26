@@ -159,6 +159,8 @@ class SkillTreeDialog(QDialog):
 
     def _build_ui(self):
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(6)
 
         # 技能点显示
         sp_label = QLabel("Available Points: " + str(self.hero.skill_points))
@@ -173,10 +175,13 @@ class SkillTreeDialog(QDialog):
 
         # 用Tab展示3条分支
         tabs = QTabWidget()
+        tabs.setSizePolicy(1, 1)  # Expanding
+
         for bname, binfo in tree_info["branches"].items():
             tab = QWidget()
             tab_layout = QVBoxLayout(tab)
             tab_layout.setContentsMargins(4, 4, 4, 4)
+            tab_layout.setSpacing(4)
 
             # 分支描述
             desc_label = QLabel(binfo["desc"])
@@ -191,7 +196,8 @@ class SkillTreeDialog(QDialog):
 
             for skill in binfo["skills"]:
                 frame = QFrame()
-                frame.setMinimumHeight(50)
+                frame.setMinimumHeight(55)
+                frame.setMaximumHeight(80)
                 frame.setStyleSheet("""
                     QFrame {
                         background-color: #1a1a2e;
@@ -205,16 +211,18 @@ class SkillTreeDialog(QDialog):
 
                 # 技能信息
                 info_layout = QVBoxLayout()
+                info_layout.setContentsMargins(0, 0, 0, 0)
+                info_layout.setSpacing(2)
                 name_text = skill["name"] + "  [" + str(skill["current_rank"]) + "/" + str(skill["max_rank"]) + "]"
                 name_label = QLabel(name_text)
                 name_label.setStyleSheet("font-size: 13px; font-weight: bold; color: #FFAA00;")
-                name_label.setWordWrap(True)
+                name_label.setWordWrap(False)
                 info_layout.addWidget(name_label)
 
                 desc_text = skill["desc"] + "  (Lv." + str(skill["req_level"]) + ")"
                 desc_label = QLabel(desc_text)
                 desc_label.setStyleSheet("font-size: 11px; color: #888;")
-                desc_label.setWordWrap(True)
+                desc_label.setWordWrap(False)
                 info_layout.addWidget(desc_label)
 
                 s_layout.addLayout(info_layout, 1)
@@ -240,8 +248,17 @@ class SkillTreeDialog(QDialog):
             scroll = QScrollArea()
             scroll.setWidget(skills_widget)
             scroll.setWidgetResizable(True)
-            scroll.setStyleSheet("QScrollArea { border: none; background-color: transparent; }")
-            tab_layout.addWidget(scroll)
+            scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            scroll.setStyleSheet("""
+                QScrollArea {
+                    border: none;
+                    background-color: transparent;
+                }
+                QScrollArea > QWidget > QWidget {
+                    background-color: transparent;
+                }
+            """)
+            tab_layout.addWidget(scroll, 1)
 
             tabs.addTab(tab, bname)
 
@@ -249,7 +266,7 @@ class SkillTreeDialog(QDialog):
 
         # 重置技能按钮
         reset_cost = self.hero.get_reset_cost()
-        btn_reset = QPushButton("重置技能 ({} 金币)".format(reset_cost))
+        btn_reset = QPushButton("Reset Skills ({} gold)".format(reset_cost))
         if reset_cost > 0 and self.hero.gold >= reset_cost:
             btn_reset.setStyleSheet("""
                 QPushButton { background-color: #4a3a1a; color: #FFAA00; border-color: #665533; font-size: 12px; }
@@ -260,7 +277,6 @@ class SkillTreeDialog(QDialog):
             btn_reset.setEnabled(False)
         layout.addWidget(btn_reset)
 
-        # 关闭按钮
         btn_close = QPushButton("Close")
         btn_close.clicked.connect(self.close)
         layout.addWidget(btn_close)
@@ -293,16 +309,27 @@ class SkillTreeDialog(QDialog):
             return
 
         tabs = QTabWidget()
+        tabs.setSizePolicy(1, 1)
+
         for bname, binfo in tree_info["branches"].items():
             tab = QWidget()
             tab_layout = QVBoxLayout(tab)
+            tab_layout.setContentsMargins(4, 4, 4, 4)
+            tab_layout.setSpacing(4)
 
             desc_label = QLabel(binfo["desc"])
             desc_label.setStyleSheet("color: #888; font-size: 11px;")
             tab_layout.addWidget(desc_label)
 
+            skills_widget = QWidget()
+            skills_layout = QVBoxLayout(skills_widget)
+            skills_layout.setSpacing(4)
+            skills_layout.setContentsMargins(0, 0, 0, 0)
+
             for skill in binfo["skills"]:
                 frame = QFrame()
+                frame.setMinimumHeight(55)
+                frame.setMaximumHeight(80)
                 frame.setStyleSheet("""
                     QFrame {
                         background-color: #1a1a2e;
@@ -315,16 +342,18 @@ class SkillTreeDialog(QDialog):
                 s_layout.setSpacing(8)
 
                 info_layout = QVBoxLayout()
+                info_layout.setContentsMargins(0, 0, 0, 0)
+                info_layout.setSpacing(2)
                 name_text = skill["name"] + "  [" + str(skill["current_rank"]) + "/" + str(skill["max_rank"]) + "]"
                 name_label = QLabel(name_text)
                 name_label.setStyleSheet("font-size: 13px; font-weight: bold; color: #FFAA00;")
-                name_label.setWordWrap(True)
+                name_label.setWordWrap(False)
                 info_layout.addWidget(name_label)
 
                 desc_text = skill["desc"] + "  (Lv." + str(skill["req_level"]) + ")"
                 desc_label = QLabel(desc_text)
                 desc_label.setStyleSheet("font-size: 11px; color: #888;")
-                desc_label.setWordWrap(True)
+                desc_label.setWordWrap(False)
                 info_layout.addWidget(desc_label)
 
                 s_layout.addLayout(info_layout, 1)
@@ -341,13 +370,31 @@ class SkillTreeDialog(QDialog):
                     btn.setEnabled(False)
                 s_layout.addWidget(btn, 0)
 
-                tab_layout.addWidget(frame)
+                skills_layout.addWidget(frame)
 
-            tab_layout.addStretch()
+            skills_layout.addStretch()
+
+            scroll = QScrollArea()
+            scroll.setWidget(skills_widget)
+            scroll.setWidgetResizable(True)
+            scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            scroll.setStyleSheet("""
+                QScrollArea {
+                    border: none;
+                    background-color: transparent;
+                }
+                QScrollArea > QWidget > QWidget {
+                    background-color: transparent;
+                }
+            """)
+            tab_layout.addWidget(scroll, 1)
+
             tabs.addTab(tab, bname)
 
         if tab_index < tabs.count():
             tabs.setCurrentIndex(tab_index)
+
+        layout.addWidget(tabs, 1)
 
         layout.addWidget(tabs)
 
@@ -393,8 +440,10 @@ class TalentTreeDialog(QDialog):
 
     def _build_ui(self):
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(6)
 
-        gold_label = QLabel("金币: {}".format(self.hero.gold))
+        gold_label = QLabel("Gold: {}".format(self.hero.gold))
         gold_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #FFD700;")
         gold_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(gold_label)
@@ -402,16 +451,18 @@ class TalentTreeDialog(QDialog):
         talent_info = self.hero.get_talent_info()
 
         tabs = QTabWidget()
+        tabs.setSizePolicy(1, 1)
+
         for bid, binfo in talent_info.items():
             tab = QWidget()
             tab_layout = QVBoxLayout(tab)
             tab_layout.setContentsMargins(4, 4, 4, 4)
+            tab_layout.setSpacing(4)
 
             desc_label = QLabel(binfo["icon"] + " " + binfo["desc"])
             desc_label.setStyleSheet("color: {}; font-size: 12px; font-weight: bold;".format(binfo["color"]))
             tab_layout.addWidget(desc_label)
 
-            # 天赋列表容器
             talents_widget = QWidget()
             talents_layout = QVBoxLayout(talents_widget)
             talents_layout.setSpacing(4)
@@ -419,7 +470,8 @@ class TalentTreeDialog(QDialog):
 
             for talent in binfo["talents"]:
                 frame = QFrame()
-                frame.setMinimumHeight(50)
+                frame.setMinimumHeight(55)
+                frame.setMaximumHeight(80)
                 frame.setStyleSheet("""
                     QFrame {
                         background-color: #1a1a2e;
@@ -432,10 +484,12 @@ class TalentTreeDialog(QDialog):
                 t_layout.setSpacing(8)
 
                 info_layout = QVBoxLayout()
+                info_layout.setContentsMargins(0, 0, 0, 0)
+                info_layout.setSpacing(2)
                 name_text = talent["icon"] + " " + talent["name"] + "  [" + str(talent["current_rank"]) + "/" + str(talent["max_rank"]) + "]"
                 name_label = QLabel(name_text)
                 name_label.setStyleSheet("font-size: 13px; font-weight: bold; color: {};".format(binfo["color"]))
-                name_label.setWordWrap(True)
+                name_label.setWordWrap(False)
                 info_layout.addWidget(name_label)
 
                 value_now = talent["effect_per_rank"] * talent["current_rank"] * 100
@@ -443,7 +497,7 @@ class TalentTreeDialog(QDialog):
                 desc_text = talent["desc"].format(value=int(value_now)) + " -> " + str(int(value_next)) + "%"
                 desc_label = QLabel(desc_text)
                 desc_label.setStyleSheet("font-size: 11px; color: #888;")
-                desc_label.setWordWrap(True)
+                desc_label.setWordWrap(False)
                 info_layout.addWidget(desc_label)
 
                 t_layout.addLayout(info_layout, 1)
@@ -465,12 +519,20 @@ class TalentTreeDialog(QDialog):
 
             talents_layout.addStretch()
 
-            # 用ScrollArea包裹
             scroll = QScrollArea()
             scroll.setWidget(talents_widget)
             scroll.setWidgetResizable(True)
-            scroll.setStyleSheet("QScrollArea { border: none; background-color: transparent; }")
-            tab_layout.addWidget(scroll)
+            scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            scroll.setStyleSheet("""
+                QScrollArea {
+                    border: none;
+                    background-color: transparent;
+                }
+                QScrollArea > QWidget > QWidget {
+                    background-color: transparent;
+                }
+            """)
+            tab_layout.addWidget(scroll, 1)
 
             tabs.addTab(tab, binfo["icon"] + " " + binfo["name"])
 
