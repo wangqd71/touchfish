@@ -5,7 +5,7 @@
 # ============================================================
 WINDOW_TITLE = "暗黑任务栏RPG"
 WINDOW_WIDTH = 360
-WINDOW_HEIGHT = 560
+WINDOW_HEIGHT = 640
 TASKBAR_HEIGHT = 40
 
 # 游戏循环

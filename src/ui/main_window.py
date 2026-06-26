@@ -844,6 +844,7 @@ class MainWindow(QMainWindow):
 
         # === 英雄信息区 ===
         hero_group = QGroupBox("英雄")
+        hero_group.setMinimumHeight(160)
         hero_layout = QVBoxLayout(hero_group)
 
         self.lbl_name = QLabel("未创建角色")
