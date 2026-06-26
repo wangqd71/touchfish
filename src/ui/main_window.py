@@ -821,7 +821,7 @@ class MainWindow(QMainWindow):
 
         # 血条
         hp_layout = QHBoxLayout()
-        hp_layout.addWidget(QLabel("❤️"))
+        hp_layout.addWidget(QLabel("HP"))
         self.hp_bar = DarkProgressBar("#FF4444")
         hp_layout.addWidget(self.hp_bar)
         self.lbl_hp = QLabel("0/0")
@@ -831,7 +831,7 @@ class MainWindow(QMainWindow):
 
         # 经验条
         exp_layout = QHBoxLayout()
-        exp_layout.addWidget(QLabel("✨"))
+        exp_layout.addWidget(QLabel("EXP"))
         self.exp_bar = DarkProgressBar("#44AAFF")
         exp_layout.addWidget(self.exp_bar)
         self.lbl_exp = QLabel("0%")
@@ -841,18 +841,18 @@ class MainWindow(QMainWindow):
 
         # 属性行
         stats_layout = QHBoxLayout()
-        self.lbl_atk = StatLabel("⚔️", "攻击: 0", "#FF6666")
-        self.lbl_def = StatLabel("🛡️", "防御: 0", "#6666FF")
-        self.lbl_spd = StatLabel("💨", "速度: 0", "#66FF66")
+        self.lbl_atk = StatLabel("", "攻击: 0", "#FF6666")
+        self.lbl_def = StatLabel("", "防御: 0", "#6666FF")
+        self.lbl_spd = StatLabel("", "速度: 0", "#66FF66")
         stats_layout.addWidget(self.lbl_atk)
         stats_layout.addWidget(self.lbl_def)
         stats_layout.addWidget(self.lbl_spd)
         hero_layout.addLayout(stats_layout)
 
         stats2_layout = QHBoxLayout()
-        self.lbl_gold = StatLabel("💰", "金币: 0", GOLD_COLOR)
-        self.lbl_sp = StatLabel("🔮", "技能点: 0", "#AA55CC")
-        self.lbl_crit = StatLabel("💥", "暴击: 8%", "#FF5555")
+        self.lbl_gold = StatLabel("", "金币: 0", GOLD_COLOR)
+        self.lbl_sp = StatLabel("", "技能点: 0", "#AA55CC")
+        self.lbl_crit = StatLabel("", "暴击: 8%", "#FF5555")
         stats2_layout.addWidget(self.lbl_gold)
         stats2_layout.addWidget(self.lbl_sp)
         stats2_layout.addWidget(self.lbl_crit)
@@ -970,7 +970,7 @@ class MainWindow(QMainWindow):
             return
 
         cls_cfg = HERO_CLASSES[hero.hero_class]
-        self.lbl_name.setText(f"{cls_cfg['icon']} {hero.name} - {cls_cfg['name']} Lv.{hero.level}")
+        self.lbl_name.setText("{} - {} Lv.{}".format(hero.name, cls_cfg["name"], hero.level))
 
         self.hp_bar.setValue(int(hero.hp_percent * 100))
         self.lbl_hp.setText(f"{hero.current_hp}/{hero.max_hp}")
@@ -981,9 +981,9 @@ class MainWindow(QMainWindow):
         else:
             self.lbl_exp.setText(f"{hero.exp}/{hero.exp_to_level}")
 
-        self.lbl_atk.setText(f"⚔️ 攻击: {hero.atk}")
-        self.lbl_def.setText(f"🛡️ 防御: {hero.defense}")
-        self.lbl_spd.setText(f"💨 速度: {hero.speed:.1f}")
+        self.lbl_atk.setText("攻击: {}".format(hero.atk))
+        self.lbl_def.setText("防御: {}".format(hero.defense))
+        self.lbl_spd.setText("速度: {:.1f}".format(hero.speed))
         self.lbl_gold.setText("金币: {}".format(hero.gold))
         self.lbl_sp.setText("技能点: {}".format(hero.skill_points))
         self.lbl_crit.setText("暴击: {}%".format(int(hero.crit_rate*100)))
