@@ -599,19 +599,23 @@ class InventoryDialog(QDialog):
             item = self.hero.equipment.get(slot_key)
             slot_name = EQUIPMENT_SLOTS[slot_key]["name"]
             if item:
-                yy_str = ""
+                yy_sym = ""
                 if item.yin_yang == YY_YANG:
-                    yy_str = " [———]"
+                    yy_sym = "———"
                 elif item.yin_yang == YY_YIN:
-                    yy_str = " [— —]"
-                text = "[{}] {} ({}) {} 评分:{}{}".format(
-                    slot_name, item.name, item.rarity_name, item.get_stat_text(), item.score, yy_str)
+                    yy_sym = "— —"
+                left = "[{}] {} ({}) {}".format(
+                    slot_name, item.name, item.rarity_name, item.get_stat_text())
+                if yy_sym:
+                    text = left.ljust(42) + "[" + yy_sym + "]"
+                else:
+                    text = left
                 color = item.rarity_color
             else:
                 text = "[{}] -".format(slot_name)
                 color = "#555555"
             lbl = QLabel(text)
-            lbl.setStyleSheet("font-size: 11px; color: {}; padding: 2px;".format(color))
+            lbl.setStyleSheet("font-size: 11px; color: {}; padding: 2px; font-family: Consolas, monospace;".format(color))
             layout.addWidget(lbl)
 
         # 卦象显示
@@ -666,15 +670,19 @@ class InventoryDialog(QDialog):
             row.addWidget(cb, 0)
 
             slot_name = EQUIPMENT_SLOTS[item.slot]["name"]
-            yy_str = ""
+            yy_sym = ""
             if item.yin_yang == YY_YANG:
-                yy_str = " [———]"
+                yy_sym = "———"
             elif item.yin_yang == YY_YIN:
-                yy_str = " [— —]"
-            text = "[{}] {} ({}) {} 评分:{}{}".format(
-                slot_name, item.name, item.rarity_name, item.get_stat_text(), item.score, yy_str)
+                yy_sym = "— —"
+            left = "[{}] {} ({}) {}".format(
+                slot_name, item.name, item.rarity_name, item.get_stat_text())
+            if yy_sym:
+                text = left.ljust(38) + "[" + yy_sym + "]"
+            else:
+                text = left
             lbl = QLabel(text)
-            lbl.setStyleSheet("font-size: 10px; color: {};".format(item.rarity_color))
+            lbl.setStyleSheet("font-size: 10px; color: {}; font-family: Consolas, monospace;".format(item.rarity_color))
             row.addWidget(lbl, 1)
 
             btn_equip = QPushButton("装备")
@@ -806,15 +814,19 @@ class InventoryDialog(QDialog):
             row.addWidget(cb, 0)
 
             slot_name = EQUIPMENT_SLOTS[item.slot]["name"]
-            yy_str = ""
+            yy_sym = ""
             if item.yin_yang == YY_YANG:
-                yy_str = " [———]"
+                yy_sym = "———"
             elif item.yin_yang == YY_YIN:
-                yy_str = " [— —]"
-            text = "[{}] {} ({}) {} 评分:{}{}".format(
-                slot_name, item.name, item.rarity_name, item.get_stat_text(), item.score, yy_str)
+                yy_sym = "— —"
+            left = "[{}] {} ({}) {}".format(
+                slot_name, item.name, item.rarity_name, item.get_stat_text())
+            if yy_sym:
+                text = left.ljust(38) + "[" + yy_sym + "]"
+            else:
+                text = left
             lbl = QLabel(text)
-            lbl.setStyleSheet("font-size: 10px; color: {};".format(item.rarity_color))
+            lbl.setStyleSheet("font-size: 10px; color: {}; font-family: Consolas, monospace;".format(item.rarity_color))
             row.addWidget(lbl, 1)
 
             btn_equip = QPushButton("装备")
@@ -1077,22 +1089,27 @@ class MainWindow(QMainWindow):
             item = hero.equipment.get(slot_key)
             if item:
                 stat_parts = []
-                if item.hp > 0: stat_parts.append("生命+" + str(item.hp))
-                if item.atk > 0: stat_parts.append("攻击+" + str(item.atk))
-                if item.defense > 0: stat_parts.append("防御+" + str(item.defense))
-                if item.speed > 0: stat_parts.append("速度+" + str(item.speed))
+                if item.hp > 0: stat_parts.append("HP+" + str(item.hp))
+                if item.atk > 0: stat_parts.append("ATK+" + str(item.atk))
+                if item.defense > 0: stat_parts.append("DEF+" + str(item.defense))
+                if item.speed > 0: stat_parts.append("SPD+" + str(item.speed))
                 stat_str = " ".join(stat_parts)
                 slot_name = EQUIPMENT_SLOTS[slot_key]["name"]
                 rname = item.rarity_name
                 rcolor = item.rarity_color
-                yy_str = ""
+                yy_sym = ""
                 if item.yin_yang == YY_YANG:
-                    yy_str = " [———]"
+                    yy_sym = "———"
                 elif item.yin_yang == YY_YIN:
-                    yy_str = " [— —]"
-                text = "[" + slot_name + "] " + item.name + " (" + rname + ") " + stat_str + yy_str
+                    yy_sym = "— —"
+                # 左侧信息 + 右侧阴阳符号（右对齐）
+                left = "[" + slot_name + "] " + item.name + " (" + rname + ") " + stat_str
+                if yy_sym:
+                    text = left.ljust(46) + "[" + yy_sym + "]"
+                else:
+                    text = left
                 lbl.setText(text)
-                lbl.setStyleSheet("font-size: 10px; color: " + rcolor + ";")
+                lbl.setStyleSheet("font-size: 10px; color: " + rcolor + "; font-family: Consolas, monospace;")
             else:
                 slot_name = EQUIPMENT_SLOTS[slot_key]["name"]
                 lbl.setText("[" + slot_name + "] -")
