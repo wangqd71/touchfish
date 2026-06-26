@@ -599,8 +599,13 @@ class InventoryDialog(QDialog):
             item = self.hero.equipment.get(slot_key)
             slot_name = EQUIPMENT_SLOTS[slot_key]["name"]
             if item:
-                text = "[{}] {} ({}) {} 评分:{}".format(
-                    slot_name, item.name, item.rarity_name, item.get_stat_text(), item.score)
+                yy_str = ""
+                if item.yin_yang == YY_YANG:
+                    yy_str = " [阳]"
+                elif item.yin_yang == YY_YIN:
+                    yy_str = " [阴]"
+                text = "[{}] {} ({}) {} 评分:{}{}".format(
+                    slot_name, item.name, item.rarity_name, item.get_stat_text(), item.score, yy_str)
                 color = item.rarity_color
             else:
                 text = "[{}] -".format(slot_name)
@@ -608,6 +613,34 @@ class InventoryDialog(QDialog):
             lbl = QLabel(text)
             lbl.setStyleSheet("font-size: 11px; color: {}; padding: 2px;".format(color))
             layout.addWidget(lbl)
+
+        # 卦象显示
+        hex_info = self.hero.get_hexagram_display()
+        if hex_info["active"]:
+            sep = QLabel("─" * 60)
+            sep.setStyleSheet("color: #333; font-size: 8px;")
+            layout.addWidget(sep)
+
+            hex_label = QLabel("{} {} | {} {}".format(
+                hex_info["symbol"], hex_info["name"],
+                hex_info["bonus_name"], hex_info["bonus_text"]))
+            hex_label.setStyleSheet("font-size: 12px; font-weight: bold; color: #FFD700; padding: 2px;")
+            layout.addWidget(hex_label)
+
+            # 爻线显示
+            lines_text = ""
+            for slot_name, line_str, yy_name in hex_info["lines"]:
+                lines_text += "{}: {}  ".format(slot_name, line_str)
+            lines_label = QLabel(lines_text)
+            lines_label.setStyleSheet("font-size: 10px; color: #AAAAAA; padding: 2px;")
+            layout.addWidget(lines_label)
+        elif hex_info["count"] > 0:
+            sep = QLabel("─" * 60)
+            sep.setStyleSheet("color: #333; font-size: 8px;")
+            layout.addWidget(sep)
+            hex_label = QLabel("卦象: {}/6 件装备有阴阳属性".format(hex_info["count"]))
+            hex_label.setStyleSheet("font-size: 10px; color: #888; padding: 2px;")
+            layout.addWidget(hex_label)
 
         sep = QLabel("─" * 60)
         sep.setStyleSheet("color: #333; font-size: 8px;")
@@ -633,8 +666,13 @@ class InventoryDialog(QDialog):
             row.addWidget(cb, 0)
 
             slot_name = EQUIPMENT_SLOTS[item.slot]["name"]
-            text = "[{}] {} ({}) {} 评分:{}".format(
-                slot_name, item.name, item.rarity_name, item.get_stat_text(), item.score)
+            yy_str = ""
+            if item.yin_yang == YY_YANG:
+                yy_str = " [阳]"
+            elif item.yin_yang == YY_YIN:
+                yy_str = " [阴]"
+            text = "[{}] {} ({}) {} 评分:{}{}".format(
+                slot_name, item.name, item.rarity_name, item.get_stat_text(), item.score, yy_str)
             lbl = QLabel(text)
             lbl.setStyleSheet("font-size: 10px; color: {};".format(item.rarity_color))
             row.addWidget(lbl, 1)
@@ -768,8 +806,13 @@ class InventoryDialog(QDialog):
             row.addWidget(cb, 0)
 
             slot_name = EQUIPMENT_SLOTS[item.slot]["name"]
-            text = "[{}] {} ({}) {} 评分:{}".format(
-                slot_name, item.name, item.rarity_name, item.get_stat_text(), item.score)
+            yy_str = ""
+            if item.yin_yang == YY_YANG:
+                yy_str = " [阳]"
+            elif item.yin_yang == YY_YIN:
+                yy_str = " [阴]"
+            text = "[{}] {} ({}) {} 评分:{}{}".format(
+                slot_name, item.name, item.rarity_name, item.get_stat_text(), item.score, yy_str)
             lbl = QLabel(text)
             lbl.setStyleSheet("font-size: 10px; color: {};".format(item.rarity_color))
             row.addWidget(lbl, 1)
@@ -905,6 +948,12 @@ class MainWindow(QMainWindow):
             equip_layout.addWidget(lbl)
             self.equip_labels[slot_key] = lbl
 
+        # 卦象显示
+        self.lbl_hexagram = QLabel("")
+        self.lbl_hexagram.setStyleSheet("font-size: 11px; color: #FFD700; padding: 2px;")
+        self.lbl_hexagram.setWordWrap(True)
+        equip_layout.addWidget(self.lbl_hexagram)
+
         main_layout.addWidget(equip_group)
 
         # === 怪物/战斗区 ===
@@ -1036,15 +1085,32 @@ class MainWindow(QMainWindow):
                 slot_name = EQUIPMENT_SLOTS[slot_key]["name"]
                 rname = item.rarity_name
                 rcolor = item.rarity_color
-                text = "[" + slot_name + "] " + item.name + " (" + rname + ") " + stat_str
+                yy_str = ""
+                if item.yin_yang == YY_YANG:
+                    yy_str = " [阳]"
+                elif item.yin_yang == YY_YIN:
+                    yy_str = " [阴]"
+                text = "[" + slot_name + "] " + item.name + " (" + rname + ") " + stat_str + yy_str
                 lbl.setText(text)
                 lbl.setStyleSheet("font-size: 10px; color: " + rcolor + ";")
             else:
                 slot_name = EQUIPMENT_SLOTS[slot_key]["name"]
                 lbl.setText("[" + slot_name + "] -")
                 lbl.setStyleSheet("font-size: 10px; color: #555555;")
-                lbl.setText("[" + slot_name + "] -")
-                lbl.setStyleSheet("font-size: 11px; color: #555555;")
+
+        # Update hexagram display
+        hex_info = hero.get_hexagram_display()
+        if hex_info["active"]:
+            hex_text = "{} {} | {} +{:.0f}%".format(
+                hex_info["symbol"], hex_info["name"],
+                hex_info["bonus_name"], hex_info["bonus_value"] * 100)
+            self.lbl_hexagram.setText(hex_text)
+            self.lbl_hexagram.setStyleSheet("font-size: 11px; color: #FFD700; font-weight: bold; padding: 2px;")
+        elif hex_info["count"] > 0:
+            self.lbl_hexagram.setText("卦象: {}/6".format(hex_info["count"]))
+            self.lbl_hexagram.setStyleSheet("font-size: 10px; color: #888; padding: 2px;")
+        else:
+            self.lbl_hexagram.setText("")
 
         self.monster_widget.update_monster(self.engine.current_monster)
 

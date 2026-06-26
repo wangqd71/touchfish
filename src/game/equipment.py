@@ -78,7 +78,7 @@ EQUIP_NAME_MAP = {
 class Equipment:
     """装备类"""
 
-    def __init__(self, name, slot, rarity, level, hp=0, atk=0, defense=0, speed=0):
+    def __init__(self, name, slot, rarity, level, hp=0, atk=0, defense=0, speed=0, yin_yang=-1):
         self.name = name
         self.slot = slot
         self.rarity = rarity
@@ -87,6 +87,7 @@ class Equipment:
         self.atk = atk
         self.defense = defense
         self.speed = speed
+        self.yin_yang = yin_yang  # -1=无, 0=阴(— —), 1=阳(——)
 
     @property
     def rarity_config(self):
@@ -144,6 +145,7 @@ class Equipment:
             "atk": self.atk,
             "defense": self.defense,
             "speed": self.speed,
+            "yin_yang": self.yin_yang,
         }
 
     @classmethod
@@ -151,7 +153,8 @@ class Equipment:
         return cls(
             data["name"], data["slot"], data["rarity"], data["level"],
             data.get("hp", 0), data.get("atk", 0),
-            data.get("defense", 0), data.get("speed", 0)
+            data.get("defense", 0), data.get("speed", 0),
+            data.get("yin_yang", -1)
         )
 
     @classmethod
@@ -196,7 +199,12 @@ class Equipment:
             defense = int(base_stat * 0.35 * rarity_mult * random.uniform(0.85, 1.15))
             speed = round(rarity_mult * random.uniform(0.1, 0.6), 1)
 
-        return cls(name, slot, rarity, level, hp, atk, defense, speed)
+        # 阴阳属性（史诗级以上）
+        yin_yang = -1
+        if rarity in (RARITY_EPIC, RARITY_LEGENDARY, RARITY_MYTHIC, RARITY_COSMIC):
+            yin_yang = random.choice([0, 1])
+
+        return cls(name, slot, rarity, level, hp, atk, defense, speed, yin_yang)
 
     @staticmethod
     def _random_rarity():

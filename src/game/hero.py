@@ -80,6 +80,8 @@ class Hero:
         base = self.base_hp + (self.level - 1) * HERO_HP_GROWTH
         equip_bonus = sum(e.hp for e in self.equipment.values() if e)
         mult = 1.0 + self._get_skill_bonus("hp_mult") + self._get_talent_bonus("hp_mult")
+        hex_type, hex_val = self.get_hexagram_bonus()
+        if hex_type == "hp_mult": mult += hex_val
         return int((base * self.class_config["hp_mult"] + equip_bonus) * mult)
 
     @property
@@ -87,6 +89,8 @@ class Hero:
         base = self.base_atk + (self.level - 1) * HERO_ATK_GROWTH
         equip_bonus = sum(e.atk for e in self.equipment.values() if e)
         mult = 1.0 + self._get_skill_bonus("atk_mult") + self._get_talent_bonus("atk_mult")
+        hex_type, hex_val = self.get_hexagram_bonus()
+        if hex_type == "atk_mult": mult += hex_val
         return int((base * self.class_config["atk_mult"] + equip_bonus) * mult)
 
     @property
@@ -94,6 +98,8 @@ class Hero:
         base = self.base_def + (self.level - 1) * HERO_DEF_GROWTH
         equip_bonus = sum(e.defense for e in self.equipment.values() if e)
         mult = 1.0 + self._get_skill_bonus("def_mult") + self._get_talent_bonus("def_mult")
+        hex_type, hex_val = self.get_hexagram_bonus()
+        if hex_type == "def_mult": mult += hex_val
         return int((base * self.class_config["def_mult"] + equip_bonus) * mult)
 
     @property
@@ -101,35 +107,51 @@ class Hero:
         base = self.base_speed
         equip_bonus = sum(e.speed for e in self.equipment.values() if e)
         mult = 1.0 + self._get_skill_bonus("speed_mult") + self._get_talent_bonus("speed_mult")
+        hex_type, hex_val = self.get_hexagram_bonus()
+        if hex_type == "speed_mult": mult += hex_val
         return (base * self.class_config["speed_mult"] + equip_bonus) * mult
 
     @property
     def crit_rate(self):
-        return CRIT_CHANCE + self._get_skill_bonus("crit_rate") + self._get_talent_bonus("crit_rate")
+        base = CRIT_CHANCE + self._get_skill_bonus("crit_rate") + self._get_talent_bonus("crit_rate")
+        hex_type, hex_val = self.get_hexagram_bonus()
+        if hex_type == "crit_rate": base += hex_val
+        return base
 
     @property
     def crit_damage_mult(self):
-        return CRIT_DAMAGE_MULT + self._get_skill_bonus("crit_dmg")
+        base = CRIT_DAMAGE_MULT + self._get_skill_bonus("crit_dmg") + self._get_talent_bonus("crit_dmg")
+        hex_type, hex_val = self.get_hexagram_bonus()
+        if hex_type == "crit_dmg": base += hex_val
+        return base
 
     @property
     def dodge_rate(self):
-        return DODGE_CHANCE + self._get_skill_bonus("dodge_rate")
+        base = DODGE_CHANCE + self._get_skill_bonus("dodge_rate") + self._get_talent_bonus("dodge_rate")
+        hex_type, hex_val = self.get_hexagram_bonus()
+        if hex_type == "dodge_rate": base += hex_val
+        return base
 
     @property
     def dmg_mult(self):
-        return 1.0 + self._get_skill_bonus("dmg_mult") + self._get_talent_bonus("dmg_mult")
-
-    @property
-    def dmg_reduce(self):
-        return self._get_skill_bonus("dmg_reduce")
+        base = 1.0 + self._get_skill_bonus("dmg_mult") + self._get_talent_bonus("dmg_mult")
+        hex_type, hex_val = self.get_hexagram_bonus()
+        if hex_type == "dmg_mult": base += hex_val
+        return base
 
     @property
     def exp_mult(self):
-        return 1.0 + self._get_skill_bonus("exp_mult") + self._get_talent_bonus("exp_mult")
+        base = 1.0 + self._get_skill_bonus("exp_mult") + self._get_talent_bonus("exp_mult")
+        hex_type, hex_val = self.get_hexagram_bonus()
+        if hex_type == "exp_mult": base += hex_val
+        return base
 
     @property
     def gold_mult(self):
-        return 1.0 + self._get_skill_bonus("gold_mult") + self._get_talent_bonus("gold_mult")
+        base = 1.0 + self._get_skill_bonus("gold_mult") + self._get_talent_bonus("gold_mult")
+        hex_type, hex_val = self.get_hexagram_bonus()
+        if hex_type == "gold_mult": base += hex_val
+        return base
 
     @property
     def drop_rate_bonus(self):
@@ -138,6 +160,72 @@ class Hero:
     @property
     def sell_mult(self):
         return 1.0 + self._get_talent_bonus("sell_mult")
+
+    # ---- 六十四卦系统 ----
+
+    def get_hexagram(self):
+        """计算当前装备形成的卦象，返回 (卦名, 符号, 加成类型, 加成数值, 爻列表) 或 None"""
+        lines = []
+        for slot in SLOT_LINE_ORDER:
+            item = self.equipment.get(slot)
+            if item and item.yin_yang >= 0:
+                lines.append(item.yin_yang)
+            else:
+                return None  # 任一槽位无阴阳属性则不形成卦象
+
+        # 从下到上组合成6位二进制
+        binary = "".join(str(l) for l in lines)
+        hexagram = HEXAGRAMS.get(binary)
+        if not hexagram:
+            return None
+
+        name, symbol, bonus_type, bonus_value = hexagram
+        return (name, symbol, bonus_type, bonus_value, lines)
+
+    def get_hexagram_bonus(self):
+        """获取卦象加成的属性值，返回 (bonus_type, bonus_value) 或 (None, 0)"""
+        result = self.get_hexagram()
+        if result:
+            _, _, bonus_type, bonus_value, _ = result
+            return (bonus_type, bonus_value)
+        return (None, 0)
+
+    def get_hexagram_display(self):
+        """获取卦象显示信息，返回字典或None"""
+        result = self.get_hexagram()
+        if not result:
+            # 检查有多少件史诗+装备有阴阳属性
+            yy_count = sum(1 for slot in SLOT_LINE_ORDER
+                          if self.equipment.get(slot) and self.equipment[slot].yin_yang >= 0)
+            return {"active": False, "count": yy_count, "total": 6}
+
+        name, symbol, bonus_type, bonus_value, lines = result
+        bonus_name = HEXAGRAM_BONUS_NAMES.get(bonus_type, bonus_type)
+        bonus_text = "+{:.0f}%".format(bonus_value * 100) if bonus_value > 0 else ""
+
+        # 构建爻线显示（从上到下: 主手→副手→头盔→胸甲→鞋子→饰品）
+        line_display = []
+        for slot in SLOT_LINE_ORDER:
+            item = self.equipment.get(slot)
+            yy = item.yin_yang if item else -1
+            slot_name = SLOT_NAMES_CN.get(slot, slot)
+            if yy == YY_YANG:
+                line_display.append((slot_name, YANG_DISPLAY, "阳"))
+            elif yy == YY_YIN:
+                line_display.append((slot_name, YIN_DISPLAY, "阴"))
+            else:
+                line_display.append((slot_name, "?", "?"))
+
+        return {
+            "active": True,
+            "name": name,
+            "symbol": symbol,
+            "bonus_type": bonus_type,
+            "bonus_name": bonus_name,
+            "bonus_value": bonus_value,
+            "bonus_text": bonus_text,
+            "lines": line_display,
+        }
 
     # ---- 等级与经验 ----
 
