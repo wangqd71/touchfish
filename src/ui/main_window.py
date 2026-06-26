@@ -559,6 +559,7 @@ class InventoryDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.setSpacing(4)
 
+        # 已装备
         equip_label = QLabel("已装备")
         equip_label.setStyleSheet("font-size: 13px; font-weight: bold; color: #FFAA00; padding: 2px;")
         layout.addWidget(equip_label)
@@ -585,6 +586,7 @@ class InventoryDialog(QDialog):
         inv_label.setStyleSheet("font-size: 13px; font-weight: bold; color: #FFAA00; padding: 2px;")
         layout.addWidget(inv_label)
 
+        # 背包列表
         inv_widget = QWidget()
         self.inv_layout = QVBoxLayout(inv_widget)
         self.inv_layout.setSpacing(2)
@@ -630,6 +632,7 @@ class InventoryDialog(QDialog):
         scroll.setStyleSheet("QScrollArea { border: 1px solid #333; background-color: #0a0a15; }")
         layout.addWidget(scroll, 1)
 
+        # 按钮栏
         btn_bar = QHBoxLayout()
         btn_bar.setSpacing(6)
 
@@ -676,49 +679,87 @@ class InventoryDialog(QDialog):
 
     def _select_all(self):
         self.selected = set(range(len(self.hero.inventory)))
-        self._refresh()
+        self._rebuild_inv()
 
     def _select_none(self):
         self.selected.clear()
-        self._refresh()
+        self._rebuild_inv()
 
     def _select_by_rarity(self, rarity):
         self.selected.clear()
         for idx, item in enumerate(self.hero.inventory):
             if item.rarity == rarity:
                 self.selected.add(idx)
-        self._refresh()
+        self._rebuild_inv()
 
     def _equip_item(self, index):
         self.hero.equip_from_inventory(index)
         self.selected.discard(index)
-        self._refresh()
+        self._rebuild_inv()
 
     def _sell_item(self, index):
         self.hero.sell_from_inventory(index)
         self.selected.discard(index)
-        self._refresh()
+        self._rebuild_inv()
 
     def _batch_sell(self):
         if not self.selected:
             return
-        total = self.hero.sell_batch(sorted(self.selected))
+        self.hero.sell_batch(sorted(self.selected))
         self.selected.clear()
-        self._refresh()
+        self._rebuild_inv()
 
     def _merge(self):
         if len(self.selected) != 9:
             return
         if self.hero.merge_equipment(sorted(self.selected)):
             self.selected.clear()
-            self._refresh()
+            self._rebuild_inv()
 
-    def _refresh(self):
-        parent = self.parent()
-        self.close()
-        if parent and self.hero:
-            dlg = InventoryDialog(self.hero, parent)
-            dlg.exec_()
+    def _rebuild_inv(self):
+        """只重建背包列表，不重建整个对话框"""
+        # 清空旧的inv_layout
+        while self.inv_layout.count():
+            child = self.inv_layout.takeAt(0)
+            w = child.widget()
+            if w:
+                w.setParent(None)
+                w.deleteLater()
+
+        # 重建
+        for idx, item in enumerate(self.hero.inventory):
+            row = QHBoxLayout()
+            row.setSpacing(4)
+
+            cb = QCheckBox()
+            cb.setChecked(idx in self.selected)
+            cb.stateChanged.connect(lambda state, i=idx: self._toggle_select(i, state))
+            row.addWidget(cb, 0)
+
+            slot_name = EQUIPMENT_SLOTS[item.slot]["name"]
+            text = "[{}] {} ({}) {} 评分:{}".format(
+                slot_name, item.name, item.rarity_name, item.get_stat_text(), item.score)
+            lbl = QLabel(text)
+            lbl.setStyleSheet("font-size: 10px; color: {};".format(item.rarity_color))
+            row.addWidget(lbl, 1)
+
+            btn_equip = QPushButton("装备")
+            btn_equip.setFixedSize(36, 22)
+            btn_equip.setStyleSheet("QPushButton { font-size: 10px; background-color: #1a1a2e; color: #55CC55; border: 1px solid #336633; } QPushButton:hover { background-color: #2a4a2a; }")
+            btn_equip.clicked.connect(lambda checked, i=idx: self._equip_item(i))
+            row.addWidget(btn_equip, 0)
+
+            btn_sell = QPushButton("{}g".format(max(1, int(item.sell_price * self.hero.sell_mult))))
+            btn_sell.setFixedSize(42, 22)
+            btn_sell.setStyleSheet("QPushButton { font-size: 10px; background-color: #1a1a2e; color: #FF6666; border: 1px solid #663333; } QPushButton:hover { background-color: #3a1a1a; }")
+            btn_sell.clicked.connect(lambda checked, i=idx: self._sell_item(i))
+            row.addWidget(btn_sell, 0)
+
+            row_widget = QWidget()
+            row_widget.setLayout(row)
+            self.inv_layout.addWidget(row_widget)
+
+        self.inv_layout.addStretch()
 
 
 class MainWindow(QMainWindow):
