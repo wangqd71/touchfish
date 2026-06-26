@@ -527,8 +527,8 @@ TALENT_TREES = {
 SLOT_LINE_ORDER = [SLOT_ACCESSORY, SLOT_BOOTS, SLOT_CHEST, SLOT_HELMET, SLOT_OFF_HAND, SLOT_MAIN_HAND]
 
 # 阴阳显示
-YIN_DISPLAY = "— —"   # 阴 (broken)
-YANG_DISPLAY = "——"    # 阳 (solid)
+YIN_DISPLAY = "— —"   # 阴 (broken)  3 chars
+YANG_DISPLAY = "—— "   # 阳 (solid)   3 chars (padded)
 YY_NONE = -1
 YY_YIN = 0
 YY_YANG = 1
