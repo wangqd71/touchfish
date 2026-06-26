@@ -668,9 +668,9 @@ class InventoryDialog(QDialog):
             slot_name = EQUIPMENT_SLOTS[item.slot]["name"]
             yy_str = ""
             if item.yin_yang == YY_YANG:
-                yy_str = " [阳]"
+                yy_str = " [———]"
             elif item.yin_yang == YY_YIN:
-                yy_str = " [阴]"
+                yy_str = " [— —]"
             text = "[{}] {} ({}) {} 评分:{}{}".format(
                 slot_name, item.name, item.rarity_name, item.get_stat_text(), item.score, yy_str)
             lbl = QLabel(text)
@@ -808,9 +808,9 @@ class InventoryDialog(QDialog):
             slot_name = EQUIPMENT_SLOTS[item.slot]["name"]
             yy_str = ""
             if item.yin_yang == YY_YANG:
-                yy_str = " [阳]"
+                yy_str = " [———]"
             elif item.yin_yang == YY_YIN:
-                yy_str = " [阴]"
+                yy_str = " [— —]"
             text = "[{}] {} ({}) {} 评分:{}{}".format(
                 slot_name, item.name, item.rarity_name, item.get_stat_text(), item.score, yy_str)
             lbl = QLabel(text)

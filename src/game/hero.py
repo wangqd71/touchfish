@@ -133,6 +133,13 @@ class Hero:
         return base
 
     @property
+    def dmg_reduce(self):
+        base = self._get_skill_bonus("dmg_reduce") + self._get_talent_bonus("dmg_reduce")
+        hex_type, hex_val = self.get_hexagram_bonus()
+        if hex_type == "dmg_reduce": base += hex_val
+        return base
+
+    @property
     def dmg_mult(self):
         base = 1.0 + self._get_skill_bonus("dmg_mult") + self._get_talent_bonus("dmg_mult")
         hex_type, hex_val = self.get_hexagram_bonus()
