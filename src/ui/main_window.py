@@ -603,7 +603,7 @@ class InventoryDialog(QDialog):
                 if item.yin_yang == YY_YANG:
                     yy_str = " [———]"
                 elif item.yin_yang == YY_YIN:
-                    yy_str = " [—   —]"
+                    yy_str = " [— —]"
                 text = "[{}] {} ({}) {} 评分:{}{}".format(
                     slot_name, item.name, item.rarity_name, item.get_stat_text(), item.score, yy_str)
                 color = item.rarity_color
@@ -1089,7 +1089,7 @@ class MainWindow(QMainWindow):
                 if item.yin_yang == YY_YANG:
                     yy_str = " [———]"
                 elif item.yin_yang == YY_YIN:
-                    yy_str = " [—   —]"
+                    yy_str = " [— —]"
                 text = "[" + slot_name + "] " + item.name + " (" + rname + ") " + stat_str + yy_str
                 lbl.setText(text)
                 lbl.setStyleSheet("font-size: 10px; color: " + rcolor + ";")
