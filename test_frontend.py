@@ -136,9 +136,9 @@ def test_inventory_equip():
     h = Hero("Test", CLASS_WARRIOR)
     item = Equipment.generate(10, SLOT_MAIN_HAND)
     h.add_to_inventory(item)
-    assert h.equipment["weapon"] is None
+    assert h.equipment[SLOT_MAIN_HAND] is None
     h.equip_from_inventory(0)
-    assert h.equipment["weapon"] is not None
+    assert h.equipment[SLOT_MAIN_HAND] is not None
     assert len(h.inventory) == 0
 
 def test_inventory_sell_empty():
