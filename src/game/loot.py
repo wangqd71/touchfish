@@ -39,13 +39,13 @@ class LootTable:
 
         if random.random() < drop_chance:
             # 随机装备部位
-            slot = random.choice([SLOT_WEAPON, SLOT_ARMOR, SLOT_ACCESSORY])
+            slot = random.choice(SLOT_GROUP_ALL)
             item = Equipment.generate(stage, slot)
             result.items.append(item)
 
         # Boss额外掉落
         if is_boss and random.random() < 0.3:
-            slot = random.choice([SLOT_WEAPON, SLOT_ARMOR, SLOT_ACCESSORY])
+            slot = random.choice(SLOT_GROUP_ALL)
             item = Equipment.generate(stage + 5, slot)
             result.items.append(item)
 

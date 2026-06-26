@@ -1,4 +1,4 @@
-"""展示单件装备详情"""
+﻿"""展示单件装备详情"""
 import sys, os, random
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -19,7 +19,7 @@ for rarity in [RARITY_COMMON, RARITY_RARE, RARITY_LEGENDARY, RARITY_COSMIC]:
     print(f"  [{rname}] (x{mult})")
     print(f"  {'=' * 50}")
 
-    for slot in [SLOT_WEAPON, SLOT_ARMOR, SLOT_ACCESSORY]:
+    for slot in [SLOT_MAIN_HAND, SLOT_CHEST, SLOT_ACCESSORY]:
         item = Equipment.generate(100, slot)
         sname = EQUIPMENT_SLOTS[slot]["name"]
         print(f"\n  {item.name}")

@@ -1,4 +1,4 @@
-"""装备词条系统 + 全量装备生成 → Markdown（含技能加成词条）"""
+﻿"""装备词条系统 + 全量装备生成 → Markdown（含技能加成词条）"""
 import sys, os, random
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from src.utils.constants import *
@@ -167,8 +167,8 @@ def generate_equipment(stage, slot, rarity, seed=None):
     slot_info = EQUIPMENT_SLOTS[slot]
 
     name_map = {
-        SLOT_WEAPON: WEAPON_NAMES,
-        SLOT_ARMOR: ARMOR_NAMES,
+        SLOT_MAIN_HAND: WEAPON_NAMES,
+        SLOT_CHEST: ARMOR_NAMES,
         SLOT_ACCESSORY: ACCESSORY_NAMES,
     }
     name = random.choice(name_map[slot][rarity])
@@ -177,9 +177,9 @@ def generate_equipment(stage, slot, rarity, seed=None):
     base = 5 + stage * 2.5
     hp = 0; atk = 0; defense = 0; speed = 0.0
 
-    if slot == SLOT_WEAPON:
+    if slot == SLOT_MAIN_HAND:
         atk = int(base * rmult * random.uniform(0.9, 1.1))
-    elif slot == SLOT_ARMOR:
+    elif slot == SLOT_CHEST:
         hp = int(base * 3 * rmult * random.uniform(0.9, 1.1))
         defense = int(base * 0.6 * rmult * random.uniform(0.9, 1.1))
     else:
@@ -254,7 +254,7 @@ def generate_all_equipment(stage=100):
     all_items = []
     seed_counter = 0
     for rarity in RARITY_CONFIG:
-        for slot in [SLOT_WEAPON, SLOT_ARMOR, SLOT_ACCESSORY]:
+        for slot in [SLOT_MAIN_HAND, SLOT_CHEST, SLOT_ACCESSORY]:
             for i in range(3):  # 每种3件
                 item = generate_equipment(stage, slot, rarity, seed=seed_counter)
                 seed_counter += 1
@@ -296,7 +296,7 @@ def write_markdown(items, filepath):
         lines.append(f"## {rname} (x{rmult} | {affix_n}条词条)")
         lines.append("")
 
-        for slot in [SLOT_WEAPON, SLOT_ARMOR, SLOT_ACCESSORY]:
+        for slot in [SLOT_MAIN_HAND, SLOT_CHEST, SLOT_ACCESSORY]:
             slot_items = [i for i in items if i["slot"] == EQUIPMENT_SLOTS[slot]["name"] and i["rarity"] == rname]
             if not slot_items:
                 continue

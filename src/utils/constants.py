@@ -332,16 +332,27 @@ RARITY_CONFIG = {
     RARITY_COSMIC:    {"name": "宇宙", "color": "#00FFFF", "stat_mult": 5.5,  "drop_weight": 0.5},
 }
 
-# 装备部位
-SLOT_WEAPON    = "weapon"
-SLOT_ARMOR     = "armor"
-SLOT_ACCESSORY = "accessory"
+# 装备部位 (6种)
+SLOT_MAIN_HAND  = "main_hand"    # 主手
+SLOT_OFF_HAND   = "off_hand"     # 副手
+SLOT_HELMET     = "helmet"       # 头盔
+SLOT_CHEST      = "chest"        # 胸甲
+SLOT_BOOTS      = "boots"        # 鞋子
+SLOT_ACCESSORY  = "accessory"    # 饰品
 
 EQUIPMENT_SLOTS = {
-    SLOT_WEAPON:    {"name": "武器", "icon": "⚔️"},
-    SLOT_ARMOR:     {"name": "护甲", "icon": "🛡️"},
-    SLOT_ACCESSORY: {"name": "饰品", "icon": "💍"},
+    SLOT_MAIN_HAND:  {"name": "主手", "icon": "⚔️"},
+    SLOT_OFF_HAND:   {"name": "副手", "icon": "🗡️"},
+    SLOT_HELMET:     {"name": "头盔", "icon": "⛑️"},
+    SLOT_CHEST:      {"name": "胸甲", "icon": "🛡️"},
+    SLOT_BOOTS:      {"name": "鞋子", "icon": "👢"},
+    SLOT_ACCESSORY:  {"name": "饰品", "icon": "💍"},
 }
+
+# 装备槽分组
+SLOT_GROUP_WEAPON = [SLOT_MAIN_HAND, SLOT_OFF_HAND]
+SLOT_GROUP_ARMOR  = [SLOT_HELMET, SLOT_CHEST, SLOT_BOOTS]
+SLOT_GROUP_ALL    = [SLOT_MAIN_HAND, SLOT_OFF_HAND, SLOT_HELMET, SLOT_CHEST, SLOT_BOOTS, SLOT_ACCESSORY]
 
 # ============================================================
 # 难度系统

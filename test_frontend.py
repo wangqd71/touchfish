@@ -1,4 +1,4 @@
-"""全量前端交互测试 - 模拟所有点击路径"""
+﻿"""全量前端交互测试 - 模拟所有点击路径"""
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -50,7 +50,7 @@ def test_main_window_update_ui_with_equipment():
     e = GameEngine()
     e.new_game("TestHero", CLASS_WARRIOR)
     for i in range(5):
-        item = Equipment.generate(10, random.choice([SLOT_WEAPON, SLOT_ARMOR, SLOT_ACCESSORY]))
+        item = Equipment.generate(10, random.choice([SLOT_MAIN_HAND, SLOT_CHEST, SLOT_ACCESSORY]))
         e.hero.add_to_inventory(item)
     w.engine = e
     w._update_ui()
@@ -115,7 +115,7 @@ test("SkillTree learn then save/load", test_skill_tree_learn_then_save)
 def test_inventory_create():
     h = Hero("Test", CLASS_WARRIOR)
     for i in range(5):
-        item = Equipment.generate(10, random.choice([SLOT_WEAPON, SLOT_ARMOR, SLOT_ACCESSORY]))
+        item = Equipment.generate(10, random.choice([SLOT_MAIN_HAND, SLOT_CHEST, SLOT_ACCESSORY]))
         h.add_to_inventory(item)
     dlg = InventoryDialog(h)
     dlg.show()
@@ -124,7 +124,7 @@ def test_inventory_create():
 
 def test_inventory_sell():
     h = Hero("Test", CLASS_WARRIOR)
-    item = Equipment.generate(10, SLOT_WEAPON)
+    item = Equipment.generate(10, SLOT_MAIN_HAND)
     h.add_to_inventory(item)
     gold_before = h.gold
     price = h.sell_from_inventory(0)
@@ -134,7 +134,7 @@ def test_inventory_sell():
 
 def test_inventory_equip():
     h = Hero("Test", CLASS_WARRIOR)
-    item = Equipment.generate(10, SLOT_WEAPON)
+    item = Equipment.generate(10, SLOT_MAIN_HAND)
     h.add_to_inventory(item)
     assert h.equipment["weapon"] is None
     h.equip_from_inventory(0)

@@ -1,4 +1,4 @@
-"""查看100级装备数值"""
+﻿"""查看100级装备数值"""
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -9,7 +9,7 @@ print("=" * 65)
 print("  Stage 100 Equipment Stats by Rarity (20 samples avg)")
 print("=" * 65)
 
-for slot in [SLOT_WEAPON, SLOT_ARMOR, SLOT_ACCESSORY]:
+for slot in [SLOT_MAIN_HAND, SLOT_CHEST, SLOT_ACCESSORY]:
     slot_name = EQUIPMENT_SLOTS[slot]["name"]
     print(f"\n  [{slot_name}]")
     hdr = f"  {'Rarity':>10} | {'HP':>6} | {'ATK':>6} | {'DEF':>6} | {'SPD':>5} | {'Total':>7}"
@@ -48,16 +48,16 @@ for rarity in RARITY_CONFIG:
     total_atk = 0
     total_def = 0
     total_spd = 0.0
-    for slot in [SLOT_WEAPON, SLOT_ARMOR, SLOT_ACCESSORY]:
+    for slot in [SLOT_MAIN_HAND, SLOT_CHEST, SLOT_ACCESSORY]:
         item = Equipment.generate(100, slot)
         # Force rarity
         item.rarity = rarity
         # Recalculate with forced rarity
         base = 5 + 100 * 2.5
         mult = RARITY_CONFIG[rarity]["stat_mult"]
-        if slot == SLOT_WEAPON:
+        if slot == SLOT_MAIN_HAND:
             item.atk = int(base * mult)
-        elif slot == SLOT_ARMOR:
+        elif slot == SLOT_CHEST:
             item.hp = int(base * 3 * mult)
             item.defense = int(base * 0.6 * mult)
         else:
@@ -92,11 +92,11 @@ for cls_id, cls_cfg in HERO_CLASSES.items():
     base = 5 + 100 * 2.5
     mult = 5.5  # cosmic
     from src.game.equipment import Equipment as Eq
-    w = Eq("W", SLOT_WEAPON, RARITY_COSMIC, 100, atk=int(base * mult))
-    a = Eq("A", SLOT_ARMOR, RARITY_COSMIC, 100, hp=int(base*3*mult), defense=int(base*0.6*mult))
+    w = Eq("W", SLOT_MAIN_HAND, RARITY_COSMIC, 100, atk=int(base * mult))
+    a = Eq("A", SLOT_CHEST, RARITY_COSMIC, 100, hp=int(base*3*mult), defense=int(base*0.6*mult))
     ac = Eq("C", SLOT_ACCESSORY, RARITY_COSMIC, 100, hp=int(base*mult), atk=int(base*0.35*mult), defense=int(base*0.35*mult), speed=round(mult*0.35,1))
-    h.equipment[SLOT_WEAPON] = w
-    h.equipment[SLOT_ARMOR] = a
+    h.equipment[SLOT_MAIN_HAND] = w
+    h.equipment[SLOT_CHEST] = a
     h.equipment[SLOT_ACCESSORY] = ac
 
     print(f"\n  {cls_cfg['name']}:")

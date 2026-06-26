@@ -564,7 +564,7 @@ class InventoryDialog(QDialog):
         equip_label.setStyleSheet("font-size: 13px; font-weight: bold; color: #FFAA00; padding: 2px;")
         layout.addWidget(equip_label)
 
-        for slot_key in ["weapon", "armor", "accessory"]:
+        for slot_key in SLOT_GROUP_ALL:
             item = self.hero.equipment.get(slot_key)
             slot_name = EQUIPMENT_SLOTS[slot_key]["name"]
             if item:
@@ -863,19 +863,15 @@ class MainWindow(QMainWindow):
         # === 装备栏 ===
         equip_group = QGroupBox("Equipment")
         equip_layout = QVBoxLayout(equip_group)
-        equip_layout.setSpacing(2)
+        equip_layout.setSpacing(1)
 
-        # 已装备
-        self.lbl_weapon = QLabel("[ - ]")
-        self.lbl_weapon.setStyleSheet("font-size: 11px; color: #AAAAAA;")
-        self.lbl_armor = QLabel("[ - ]")
-        self.lbl_armor.setStyleSheet("font-size: 11px; color: #AAAAAA;")
-        self.lbl_accessory = QLabel("[ - ]")
-        self.lbl_accessory.setStyleSheet("font-size: 11px; color: #AAAAAA;")
-
-        equip_layout.addWidget(self.lbl_weapon)
-        equip_layout.addWidget(self.lbl_armor)
-        equip_layout.addWidget(self.lbl_accessory)
+        # 已装备 (6槽)
+        self.equip_labels = {}
+        for slot_key in SLOT_GROUP_ALL:
+            lbl = QLabel("[ - ]")
+            lbl.setStyleSheet("font-size: 10px; color: #AAAAAA;")
+            equip_layout.addWidget(lbl)
+            self.equip_labels[slot_key] = lbl
 
         main_layout.addWidget(equip_group)
 
@@ -992,10 +988,11 @@ class MainWindow(QMainWindow):
         self.lbl_sp.setText("技能点: {}".format(hero.skill_points))
         self.lbl_crit.setText("暴击: {}%".format(int(hero.crit_rate*100)))
 
-        # Update equipment display
-        for slot_key, lbl in [("weapon", self.lbl_weapon),
-                               ("armor", self.lbl_armor),
-                               ("accessory", self.lbl_accessory)]:
+        # Update equipment display (6 slots)
+        for slot_key in SLOT_GROUP_ALL:
+            lbl = self.equip_labels.get(slot_key)
+            if not lbl:
+                continue
             item = hero.equipment.get(slot_key)
             if item:
                 stat_parts = []
@@ -1009,9 +1006,11 @@ class MainWindow(QMainWindow):
                 rcolor = item.rarity_color
                 text = "[" + slot_name + "] " + item.name + " (" + rname + ") " + stat_str
                 lbl.setText(text)
-                lbl.setStyleSheet("font-size: 11px; color: " + rcolor + ";")
+                lbl.setStyleSheet("font-size: 10px; color: " + rcolor + ";")
             else:
                 slot_name = EQUIPMENT_SLOTS[slot_key]["name"]
+                lbl.setText("[" + slot_name + "] -")
+                lbl.setStyleSheet("font-size: 10px; color: #555555;")
                 lbl.setText("[" + slot_name + "] -")
                 lbl.setStyleSheet("font-size: 11px; color: #555555;")
 

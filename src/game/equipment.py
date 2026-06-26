@@ -1,11 +1,11 @@
-"""装备系统 - 7种稀有度"""
+"""装备系统 - 7种稀有度 × 6种槽位"""
 import random
 from src.utils.constants import *
 
 # ============================================================
-# 武器名称
+# 装备名称 (按槽位)
 # ============================================================
-WEAPON_NAMES = {
+MAIN_HAND_NAMES = {
     RARITY_COMMON:    ["铁剑", "木弓", "法杖", "短刀", "长枪"],
     RARITY_UNCOMMON:  ["钢刃", "长弓", "橡木杖", "双刃匕首", "战戟"],
     RARITY_RARE:      ["秘银剑", "精灵弓", "符文杖", "淬毒短剑", "龙骨枪"],
@@ -15,7 +15,27 @@ WEAPON_NAMES = {
     RARITY_COSMIC:    ["创世之刃", "永恒之弓", "灭世法杖", "虚空之牙", "诸神黄昏"],
 }
 
-ARMOR_NAMES = {
+OFF_HAND_NAMES = {
+    RARITY_COMMON:    ["木盾", "匕首", "小刀"],
+    RARITY_UNCOMMON:  ["铁盾", "短剑", "飞刀"],
+    RARITY_RARE:      ["秘银盾", "精灵短剑", "淬毒飞刀"],
+    RARITY_EPIC:      ["暗影之盾", "风暴短剑", "奥术飞刀"],
+    RARITY_LEGENDARY: ["灭世之盾", "末日短剑", "混沌飞刀"],
+    RARITY_MYTHIC:    ["天罚之盾", "星陨短剑", "虚空飞刀"],
+    RARITY_COSMIC:    ["创世之盾", "永恒短剑", "灭世飞刀"],
+}
+
+HELMET_NAMES = {
+    RARITY_COMMON:    ["布帽", "皮盔", "铁盔"],
+    RARITY_UNCOMMON:  ["强化皮盔", "链甲头盔", "板甲头盔"],
+    RARITY_RARE:      ["秘银头盔", "精灵冠冕", "符文头盔"],
+    RARITY_EPIC:      ["暗影战盔", "风暴冠冕", "奥术头冠"],
+    RARITY_LEGENDARY: ["灭世战盔", "末日冠冕", "混沌头冠"],
+    RARITY_MYTHIC:    ["天罚战盔", "星陨冠冕", "虚空头冠"],
+    RARITY_COSMIC:    ["创世战盔", "永恒冠冕", "灭世头冠"],
+}
+
+CHEST_NAMES = {
     RARITY_COMMON:    ["布甲", "皮甲", "锁甲"],
     RARITY_UNCOMMON:  ["强化皮甲", "链甲", "板甲"],
     RARITY_RARE:      ["秘银甲", "精灵锁甲", "符文板甲"],
@@ -23,6 +43,16 @@ ARMOR_NAMES = {
     RARITY_LEGENDARY: ["灭世铠甲", "末日之衣", "混沌法袍"],
     RARITY_MYTHIC:    ["天罚圣铠", "星陨战衣", "虚空法袍"],
     RARITY_COSMIC:    ["创世之铠", "永恒之衣", "灭世法袍"],
+}
+
+BOOTS_NAMES = {
+    RARITY_COMMON:    ["布鞋", "皮靴", "铁靴"],
+    RARITY_UNCOMMON:  ["强化皮靴", "链甲靴", "板甲靴"],
+    RARITY_RARE:      ["秘银靴", "精灵长靴", "符文靴"],
+    RARITY_EPIC:      ["暗影战靴", "风暴长靴", "奥术靴"],
+    RARITY_LEGENDARY: ["灭世战靴", "末日长靴", "混沌靴"],
+    RARITY_MYTHIC:    ["天罚战靴", "星陨长靴", "虚空靴"],
+    RARITY_COSMIC:    ["创世战靴", "永恒长靴", "灭世靴"],
 }
 
 ACCESSORY_NAMES = {
@@ -36,8 +66,11 @@ ACCESSORY_NAMES = {
 }
 
 EQUIP_NAME_MAP = {
-    SLOT_WEAPON: WEAPON_NAMES,
-    SLOT_ARMOR: ARMOR_NAMES,
+    SLOT_MAIN_HAND: MAIN_HAND_NAMES,
+    SLOT_OFF_HAND:  OFF_HAND_NAMES,
+    SLOT_HELMET:    HELMET_NAMES,
+    SLOT_CHEST:     CHEST_NAMES,
+    SLOT_BOOTS:     BOOTS_NAMES,
     SLOT_ACCESSORY: ACCESSORY_NAMES,
 }
 
@@ -128,9 +161,9 @@ class Equipment:
         rarity_mult = RARITY_CONFIG[rarity]["stat_mult"]
 
         if slot is None:
-            slot = random.choice([SLOT_WEAPON, SLOT_ARMOR, SLOT_ACCESSORY])
+            slot = random.choice(SLOT_GROUP_ALL)
 
-        names = EQUIP_NAME_MAP.get(slot, WEAPON_NAMES)
+        names = EQUIP_NAME_MAP.get(slot, MAIN_HAND_NAMES)
         name = random.choice(names.get(rarity, ["未知装备"]))
 
         level = stage
@@ -141,12 +174,23 @@ class Equipment:
         defense = 0
         speed = 0
 
-        if slot == SLOT_WEAPON:
+        if slot in (SLOT_MAIN_HAND, SLOT_OFF_HAND):
+            # 武器类：主攻击
             atk = int(base_stat * rarity_mult * random.uniform(0.85, 1.15))
-        elif slot == SLOT_ARMOR:
-            hp = int(base_stat * 3 * rarity_mult * random.uniform(0.85, 1.15))
-            defense = int(base_stat * 0.6 * rarity_mult * random.uniform(0.85, 1.15))
+            if slot == SLOT_OFF_HAND:
+                # 副手偏防御
+                defense = int(base_stat * 0.3 * rarity_mult * random.uniform(0.85, 1.15))
+        elif slot in (SLOT_HELMET, SLOT_CHEST):
+            # 防具类：主生命防御
+            hp = int(base_stat * 2.5 * rarity_mult * random.uniform(0.85, 1.15))
+            defense = int(base_stat * 0.7 * rarity_mult * random.uniform(0.85, 1.15))
+        elif slot == SLOT_BOOTS:
+            # 鞋子：速度+少量防御
+            speed = round(rarity_mult * random.uniform(0.2, 0.8), 1)
+            defense = int(base_stat * 0.3 * rarity_mult * random.uniform(0.85, 1.15))
+            hp = int(base_stat * 0.8 * rarity_mult * random.uniform(0.85, 1.15))
         else:
+            # 饰品：均衡
             hp = int(base_stat * rarity_mult * random.uniform(0.85, 1.15))
             atk = int(base_stat * 0.35 * rarity_mult * random.uniform(0.85, 1.15))
             defense = int(base_stat * 0.35 * rarity_mult * random.uniform(0.85, 1.15))

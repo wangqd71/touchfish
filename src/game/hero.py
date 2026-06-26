@@ -20,8 +20,11 @@ class Hero:
 
         # 装备（必须在current_hp之前初始化）
         self.equipment = {
-            SLOT_WEAPON: None,
-            SLOT_ARMOR: None,
+            SLOT_MAIN_HAND: None,
+            SLOT_OFF_HAND:  None,
+            SLOT_HELMET:    None,
+            SLOT_CHEST:     None,
+            SLOT_BOOTS:     None,
             SLOT_ACCESSORY: None,
         }
 
@@ -260,7 +263,7 @@ class Hero:
         # 计算平均等级，随机部位
         import random
         avg_level = max(1, sum(it.level for it in items) // 9)
-        slot = random.choice([SLOT_WEAPON, SLOT_ARMOR, SLOT_ACCESSORY])
+        slot = random.choice(SLOT_GROUP_ALL)
         from src.game.equipment import Equipment
         new_item = Equipment.generate(avg_level, slot)
         # 强制设置品级
