@@ -150,8 +150,15 @@ class Equipment:
 
     @classmethod
     def from_save_data(cls, data):
+        # 兼容旧存档：映射旧槽位名
+        OLD_SLOT_MAP = {
+            "weapon": SLOT_MAIN_HAND,
+            "armor": SLOT_CHEST,
+        }
+        slot = data.get("slot", SLOT_MAIN_HAND)
+        slot = OLD_SLOT_MAP.get(slot, slot)
         return cls(
-            data["name"], data["slot"], data["rarity"], data["level"],
+            data["name"], slot, data["rarity"], data["level"],
             data.get("hp", 0), data.get("atk", 0),
             data.get("defense", 0), data.get("speed", 0),
             data.get("yin_yang", -1)

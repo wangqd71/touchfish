@@ -544,9 +544,19 @@ class Hero:
         hero.total_kills = data.get("total_kills", 0)
         hero.total_gold_earned = data.get("total_gold_earned", 0)
         hero.highest_stage = data.get("highest_stage", 1)
+
+        # 兼容旧存档：映射旧槽位名到新槽位名
+        OLD_SLOT_MAP = {
+            "weapon": SLOT_MAIN_HAND,
+            "armor": SLOT_CHEST,
+        }
         for slot, item_data in data.get("equipment", {}).items():
             if item_data:
-                hero.equipment[slot] = Equipment.from_save_data(item_data)
+                # 映射旧槽位名
+                actual_slot = OLD_SLOT_MAP.get(slot, slot)
+                if actual_slot in SLOT_GROUP_ALL:
+                    hero.equipment[actual_slot] = Equipment.from_save_data(item_data)
+
         hero.inventory = [Equipment.from_save_data(d) for d in data.get("inventory", [])]
         hero.current_hp = min(data["current_hp"], hero.max_hp)
         return hero
