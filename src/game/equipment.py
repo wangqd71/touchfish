@@ -199,10 +199,8 @@ class Equipment:
             defense = int(base_stat * 0.35 * rarity_mult * random.uniform(0.85, 1.15))
             speed = round(rarity_mult * random.uniform(0.1, 0.6), 1)
 
-        # 阴阳属性（史诗级以上）
-        yin_yang = -1
-        if rarity in (RARITY_EPIC, RARITY_LEGENDARY, RARITY_MYTHIC, RARITY_COSMIC):
-            yin_yang = random.choice([0, 1])
+        # 阴阳属性（所有装备随机生成）
+        yin_yang = random.choice([0, 1])
 
         return cls(name, slot, rarity, level, hp, atk, defense, speed, yin_yang)
 
