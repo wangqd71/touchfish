@@ -210,9 +210,9 @@ class Hero:
             yy = item.yin_yang if item else -1
             slot_name = SLOT_NAMES_CN.get(slot, slot)
             if yy == YY_YANG:
-                line_display.append((slot_name, YANG_DISPLAY, "阳"))
+                line_display.append((slot_name, YANG_DISPLAY, YANG_DISPLAY))
             elif yy == YY_YIN:
-                line_display.append((slot_name, YIN_DISPLAY, "阴"))
+                line_display.append((slot_name, YIN_DISPLAY, YIN_DISPLAY))
             else:
                 line_display.append((slot_name, "?", "?"))
 
