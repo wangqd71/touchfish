@@ -1019,6 +1019,8 @@ class MainWindow(QMainWindow):
         for slot_key in SLOT_GROUP_ALL:
             lbl = QLabel("[ - ]")
             lbl.setStyleSheet("font-size: 10px; color: #AAAAAA;")
+            lbl.setFixedWidth(340)
+            lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             equip_layout.addWidget(lbl)
             self.equip_labels[slot_key] = lbl
 
@@ -1144,38 +1146,42 @@ class MainWindow(QMainWindow):
         self.lbl_crit.setText("暴击: {}%".format(int(hero.crit_rate*100)))
 
         # Update equipment display (6 slots)
+        equip_data = []
         for slot_key in SLOT_GROUP_ALL:
             lbl = self.equip_labels.get(slot_key)
             if not lbl:
                 continue
             item = hero.equipment.get(slot_key)
             if item:
-                stat_parts = []
-                if item.hp > 0: stat_parts.append("HP+" + str(item.hp))
-                if item.atk > 0: stat_parts.append("ATK+" + str(item.atk))
-                if item.defense > 0: stat_parts.append("DEF+" + str(item.defense))
-                if item.speed > 0: stat_parts.append("SPD+" + str(item.speed))
-                stat_str = " ".join(stat_parts)
+                sp = []
+                if item.hp > 0: sp.append("HP+" + str(item.hp))
+                if item.atk > 0: sp.append("ATK+" + str(item.atk))
+                if item.defense > 0: sp.append("DEF+" + str(item.defense))
+                if item.speed > 0: sp.append("SPD+" + str(item.speed))
                 slot_name = EQUIPMENT_SLOTS[slot_key]["name"]
-                rname = item.rarity_name
-                rcolor = item.rarity_color
-                yy_sym = ""
-                if item.yin_yang == YY_YANG:
-                    yy_sym = "———"
-                elif item.yin_yang == YY_YIN:
-                    yy_sym = "— —"
-                # 左侧信息 + 右侧阴阳符号（右对齐）
-                left = "[" + slot_name + "] " + item.name + " (" + rname + ") " + stat_str
-                if yy_sym:
-                    text = left.ljust(46) + "[" + yy_sym + "]"
-                else:
-                    text = left
-                lbl.setText(text)
-                lbl.setStyleSheet("font-size: 10px; color: " + rcolor + "; font-family: Consolas, monospace;")
+                left = "[{}] {} ({}) {}".format(slot_name, item.name, item.rarity_name, " ".join(sp))
+                yy = ""
+                if item.yin_yang == YY_YANG: yy = "———"
+                elif item.yin_yang == YY_YIN: yy = "— —"
+                equip_data.append((slot_key, left, yy, item.rarity_color))
             else:
-                slot_name = EQUIPMENT_SLOTS[slot_key]["name"]
-                lbl.setText("[" + slot_name + "] -")
+                sn = EQUIPMENT_SLOTS[slot_key]["name"]
+                lbl.setText("[{}] -".format(sn))
                 lbl.setStyleSheet("font-size: 10px; color: #555555;")
+
+        # 右对齐阴阳符号（右对齐标签文字）
+        for slot_key, left, yy, rcolor in equip_data:
+            lbl = self.equip_labels.get(slot_key)
+            if not lbl:
+                continue
+            if yy:
+                text = left + " [" + yy + "]"
+            else:
+                text = left
+            lbl.setText(text)
+            lbl.setStyleSheet("font-size: 10px; color: " + rcolor + ";")
+            # 先设置样式再设置对齐，否则样式会重置对齐
+            lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
         # Update hexagram display
         hex_info = hero.get_hexagram_display()
