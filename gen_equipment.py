@@ -124,6 +124,26 @@ WEAPON_NAMES = {
     RARITY_COSMIC:    ["创世之刃", "永恒之弓", "灭世法杖", "虚空之牙", "诸神黄昏", "混沌之锤"],
 }
 
+OFF_HAND_NAMES = {
+    RARITY_COMMON:    ["木盾", "匕首", "小刀"],
+    RARITY_UNCOMMON:  ["铁盾", "短剑", "飞刀"],
+    RARITY_RARE:      ["秘银盾", "精灵短剑", "淬毒飞刀"],
+    RARITY_EPIC:      ["暗影之盾", "风暴短剑", "奥术飞刀"],
+    RARITY_LEGENDARY: ["灭世之盾", "末日短剑", "混沌飞刀"],
+    RARITY_MYTHIC:    ["天罚之盾", "星陨短剑", "虚空飞刀"],
+    RARITY_COSMIC:    ["创世之盾", "永恒短剑", "灭世飞刀"],
+}
+
+HELMET_NAMES = {
+    RARITY_COMMON:    ["布帽", "皮盔", "铁盔"],
+    RARITY_UNCOMMON:  ["强化皮盔", "链甲头盔", "板甲头盔"],
+    RARITY_RARE:      ["秘银头盔", "精灵冠冕", "符文头盔"],
+    RARITY_EPIC:      ["暗影战盔", "风暴冠冕", "奥术头冠"],
+    RARITY_LEGENDARY: ["灭世战盔", "末日冠冕", "混沌头冠"],
+    RARITY_MYTHIC:    ["天罚战盔", "星陨冠冕", "虚空头冠"],
+    RARITY_COSMIC:    ["创世战盔", "永恒冠冕", "灭世头冠"],
+}
+
 ARMOR_NAMES = {
     RARITY_COMMON:    ["布甲", "皮甲", "锁甲"],
     RARITY_UNCOMMON:  ["强化皮甲", "链甲", "板甲"],
@@ -132,6 +152,16 @@ ARMOR_NAMES = {
     RARITY_LEGENDARY: ["灭世铠甲", "末日之衣", "混沌法袍"],
     RARITY_MYTHIC:    ["天罚圣铠", "星陨战衣", "虚空法袍"],
     RARITY_COSMIC:    ["创世之铠", "永恒之衣", "灭世法袍"],
+}
+
+BOOTS_NAMES = {
+    RARITY_COMMON:    ["布鞋", "皮靴", "铁靴"],
+    RARITY_UNCOMMON:  ["强化皮靴", "链甲靴", "板甲靴"],
+    RARITY_RARE:      ["秘银靴", "精灵长靴", "符文靴"],
+    RARITY_EPIC:      ["暗影战靴", "风暴长靴", "奥术靴"],
+    RARITY_LEGENDARY: ["灭世战靴", "末日长靴", "混沌靴"],
+    RARITY_MYTHIC:    ["天罚战靴", "星陨长靴", "虚空靴"],
+    RARITY_COSMIC:    ["创世战靴", "永恒长靴", "灭世靴"],
 }
 
 ACCESSORY_NAMES = {
@@ -168,7 +198,10 @@ def generate_equipment(stage, slot, rarity, seed=None):
 
     name_map = {
         SLOT_MAIN_HAND: WEAPON_NAMES,
-        SLOT_CHEST: ARMOR_NAMES,
+        SLOT_OFF_HAND:  OFF_HAND_NAMES,
+        SLOT_HELMET:    HELMET_NAMES,
+        SLOT_CHEST:     ARMOR_NAMES,
+        SLOT_BOOTS:     BOOTS_NAMES,
         SLOT_ACCESSORY: ACCESSORY_NAMES,
     }
     name = random.choice(name_map[slot][rarity])
@@ -177,11 +210,17 @@ def generate_equipment(stage, slot, rarity, seed=None):
     base = 5 + stage * 2.5
     hp = 0; atk = 0; defense = 0; speed = 0.0
 
-    if slot == SLOT_MAIN_HAND:
+    if slot in (SLOT_MAIN_HAND, SLOT_OFF_HAND):
         atk = int(base * rmult * random.uniform(0.9, 1.1))
-    elif slot == SLOT_CHEST:
-        hp = int(base * 3 * rmult * random.uniform(0.9, 1.1))
-        defense = int(base * 0.6 * rmult * random.uniform(0.9, 1.1))
+        if slot == SLOT_OFF_HAND:
+            defense = int(base * 0.3 * rmult * random.uniform(0.9, 1.1))
+    elif slot in (SLOT_HELMET, SLOT_CHEST):
+        hp = int(base * 2.5 * rmult * random.uniform(0.9, 1.1))
+        defense = int(base * 0.7 * rmult * random.uniform(0.9, 1.1))
+    elif slot == SLOT_BOOTS:
+        speed = round(rmult * random.uniform(0.2, 0.8), 1)
+        defense = int(base * 0.3 * rmult * random.uniform(0.9, 1.1))
+        hp = int(base * 0.8 * rmult * random.uniform(0.9, 1.1))
     else:
         hp = int(base * rmult * random.uniform(0.9, 1.1))
         atk = int(base * 0.35 * rmult * random.uniform(0.9, 1.1))
@@ -254,8 +293,8 @@ def generate_all_equipment(stage=100):
     all_items = []
     seed_counter = 0
     for rarity in RARITY_CONFIG:
-        for slot in [SLOT_MAIN_HAND, SLOT_CHEST, SLOT_ACCESSORY]:
-            for i in range(3):  # 每种3件
+        for slot in SLOT_GROUP_ALL:
+            for i in range(2):  # 每种2件
                 item = generate_equipment(stage, slot, rarity, seed=seed_counter)
                 seed_counter += 1
                 all_items.append(item)
@@ -296,7 +335,7 @@ def write_markdown(items, filepath):
         lines.append(f"## {rname} (x{rmult} | {affix_n}条词条)")
         lines.append("")
 
-        for slot in [SLOT_MAIN_HAND, SLOT_CHEST, SLOT_ACCESSORY]:
+        for slot in SLOT_GROUP_ALL:
             slot_items = [i for i in items if i["slot"] == EQUIPMENT_SLOTS[slot]["name"] and i["rarity"] == rname]
             if not slot_items:
                 continue
